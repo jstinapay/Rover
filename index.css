@@ -25,6 +25,22 @@ body {
     display: grid;
     grid-template-columns: auto 1fr;
 }
+main{
+    padding: min(30px, 7%)
+}
+main p {
+    color: var(--secondary-text-clr);
+    margin-top: 5px;
+    margin-bottom: 15px;
+}
+.container{
+    border: 1px solid var(--line-clr);
+    border-radius: 1em;
+    margin-bottom: 20px;
+    padding: min(3em, 15%);
+
+    h2, p { margin-top: 1em}
+}
 
 #sidebar {
     box-sizing: border-box;
@@ -33,9 +49,17 @@ body {
     padding: 5px 1em;
     background-color: var(--base-clr);
     border-right: 1px solid var(--line-clr);
+
     position: sticky;
     top: 0;
     align-self: start;
+    transition: 300ms ease-in-out;
+    overflow: hidden;
+    text-wrap: nowrap;
+}
+#sidebar.close{
+    padding: 5px;
+    width: 60px;
 }
 
 #sidebar ul{
@@ -77,14 +101,54 @@ body {
     font: inherit;
     cursor: pointer;
 }
-.nav-links {
-    padding: 0;
-    margin: 0;
-    list-style: none;
-    
+
+#sidebar svg {
+    flex-shrink: 0;
+    fill: var(--text-clr);
 }
-.nav-links li, a {
-    margin: 10px 0;
-    text-decoration: none;
-    color: black;
+
+#sidebar a span, #sidebar .dropdown-btn span {
+    flex-grow: 1;
+}
+
+#sidebar a:hover, #sidebar .dropdown-btn:hover {
+    background-color: var(--hover-clr);
+}
+
+#sidebar .sub-menu{
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: 300ms ease-in-out;
+
+    > div{
+        overflow: hidden;
+    }
+
+}
+
+#sidebar .sub-menu.show {
+    grid-template-rows: 1fr;
+}
+.dropdown-btn svg {
+    transition: 200ms ease;
+}
+.rotate svg:last-child {
+    rotate: 180deg;
+}
+#sidebar .sub-menu a {
+    padding-left: 2em;
+}
+#toggle-btn {
+    margin-left: auto;
+    padding: 1em;
+    border: none;
+    background: none;
+    cursor: pointer;
+
+    svg{
+        transition: rotate 150ms ease;
+    }
+}
+#toggle-btn:hover{
+    background-color: var(--hover-clr);
 }
