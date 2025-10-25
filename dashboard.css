@@ -26,38 +26,20 @@ body {
     grid-template-columns: auto 1fr;
 }
 main{
-    margin-top: 125px;
-    padding: min(30px, 7%);
+    padding: min(30px, 7%)
 }
-main h4, p {
+main p {
     color: var(--secondary-text-clr);
     margin-top: 5px;
     margin-bottom: 15px;
-    text-align: justify;
 }
 .container{
     border: 1px solid var(--line-clr);
-    border-radius: 5em;
-    padding: min(40em, 10%);
-
-    h1 { margin-top: 1em;
-         font-size: 50px;}
-    h4 { margin-top: 2em}
-}
-
-.register-btn {
-    margin-top: 0.5em;
-    padding: 1em;
-    border: none;
     border-radius: 1em;
-    background-color: var(--accent-clr);
-    color: var(--text-clr);
-    cursor: pointer;
-    transition: 200ms ease;
-    width: 10%;
-}
-.register-btn:hover{
-    background-color: var(--hover-clr);
+    margin-bottom: 20px;
+    padding: min(3em, 15%);
+
+    h2, p { margin-top: 1em}
 }
 
 #sidebar {
