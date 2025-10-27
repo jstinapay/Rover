@@ -16,16 +16,16 @@ if ($conn->connect_error) {
 // Get form data
 $fullname = $_POST['fullname'];
 $email = $_POST['email'];
-$currency = $_POST['currency'];
+$password = $_POST['password'];
 
 //prepare and execute SQL
-$sql = "INSERT INTO traveller_table (traveller_name, traveller_email, preferred_currency) VALUES (?, ?, ?)";
+$sql = "INSERT INTO traveller_table (traveller_name, traveller_email, traveller_password) VALUES (?, ?, ?)";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sss", $fullname, $email, $currency);
+$stmt->bind_param("sss", $fullname, $email, $password);
 
 if ($stmt->execute()) {
     // On success, redirect to createTrip.html
-    header("Location: ../createTrip.html"); // Assumes createTrip.html is one level up
+    header("Location: ../login.html"); // Assumes createTrip.html is one level up
     exit(); // IMPORTANT: Stops the script from running further
 } else {
     echo "Error: " . $stmt->error;
