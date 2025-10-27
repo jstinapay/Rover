@@ -214,3 +214,18 @@ input:focus, select:focus {
     background-color: var(--button-hover-clr);
 }
 
+p {
+    text-align: center;
+    margin-top: 1em;
+    font-size: 0.8rem;
+    color: var(--secondary-text-clr);
+}
+a {
+    color: var(--accent-clr);
+    text-decoration: none;
+    font-weight: 600;
+}
+a:hover {
+    text-decoration: underline;
+}
+
