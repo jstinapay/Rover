@@ -30,7 +30,7 @@ if ($result->num_rows === 1) {
     if ($user['traveller_password'] == $password) {
         $_SESSION['traveller_id'] = $user['traveller_id'];
         $_SESSION['traveller_name'] = $user['traveller_name'];
-        header("Location: ../createTrip.html");
+        header("Location: ../dashboard.html");
         exit();
     } else {
         echo "<p style = 'color: red'> Incorrect password>";
