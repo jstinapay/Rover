@@ -194,6 +194,10 @@ main p {
 }
 
 .trip_card {
+    width: 50%;
+    margin: auto auto 1em ;
+
+    background-color: var(--base-clr);
     border-radius: 10px;
     padding: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
