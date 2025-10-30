@@ -3,6 +3,7 @@ session_start();
 
 // if the user is not logged in, redirect
 if (!isset($_SESSION['traveller_id'])) {
+    echo "<script type='text/javascript'>alert('You must be logged in to create a trip!');</script>";
     header("Location: ../login.html");
     exit();
 }
@@ -22,20 +23,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $trip_name = $_POST['trip_name'];
     $region = $_POST['region'];
     $country = $_POST['country'];
+    $city = $_POST['city'];
     $start_date = $_POST['start_date'];
     $end_date = $_POST['end_date'];
-    $total_budget = $_POST['budget'];
+    $total_budget = $_POST['total_budget'];
 
     $sql = "INSERT INTO trip_table 
-            (traveller_id, trip_name, region, country, start_date, end_date, total_budget) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)";
+            (traveller_id, trip_name, region, country, city, start_date, end_date, total_budget) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("isssssd", $traveller_id, $trip_name, $region, $country, $start_date, $end_date, $total_budget);
+    $stmt->bind_param("issssssd", $traveller_id, $trip_name, $region, $country, $city, $start_date, $end_date, $total_budget);
 
     if ($stmt->execute()) {
-        echo "<p>✅ Trip created successfully! <a href='dashboard.php'>Go back</a></p>";
+        header("Location: dashboard.php");;
     } else {
-        echo "❌ Error: " . $stmt->error;
+        echo "<script type='text/javascript'>alert('Error: " . $stmt->error . "');</script>";
     }
 
     $stmt->close();
