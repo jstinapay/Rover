@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->bind_param("isssssd", $traveller_id, $trip_name, $region, $country, $start_date, $end_date, $total_budget);
 
     if ($stmt->execute()) {
-        echo "<p>✅ Trip created successfully! <a href='../dashboard.html'>Go back</a></p>";
+        echo "<p>✅ Trip created successfully! <a href='dashboard.php'>Go back</a></p>";
     } else {
         echo "❌ Error: " . $stmt->error;
     }
