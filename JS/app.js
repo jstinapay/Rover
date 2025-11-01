@@ -21,12 +21,5 @@ function toggleSubMenu(button) {
     }
 }
 
-function viewTrip(tripId) {
-    // Redirect to trip details page or show modal
-    window.location.href = `tripDetails.php?id=${tripId}`;
-}
 
-function editTrip(tripId) {
-    // Redirect to edit trip page
-    window.location.href = `editTrip.php?id=${tripId}`;
-}
+

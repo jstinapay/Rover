@@ -1,14 +1,14 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['traveller_id'])) {
+if (!isset($_SESSION['rover_id'])) {
     header("Location: ../login.html");
     exit();
 }
 $host = "localhost";
 $user = "root";
 $pass = "12345678";
-$dbname = "travelbudgetingapp";
+$dbname = "RoverWallet";
 
 $conn = new mysqli($host, $user, $pass, $dbname);
 
@@ -16,10 +16,39 @@ if ($conn->connect_error) {
     die("Connection Failed: " . $conn->connect_error);
 }
 
-$traveller_id = $_SESSION['traveller_id'];
-$sql = "SELECT * FROM trip_table WHERE traveller_id = ? ORDER BY start_date DESC";
+$currency_code = isset($_SESSION['currency_code']) ? $_SESSION['currency_code'] : 'USD';
+
+$currency_symbols = [
+    'PHP' => '₱',
+    'USD' => '$',
+    'EUR' => '€',
+    'JPY' => '¥',
+    'GBP' => '£',
+    'CNY' => '¥',
+];
+
+$symbol = isset($currency_symbols[$currency_code]) ? $currency_symbols[$currency_code] : '$';
+
+$rover_id = $_SESSION['rover_id'];
+$sql = "SELECT 
+            t.trip_id,
+            t.trip_name,
+            t.start_date,
+            t.end_date,
+            t.total_budget,
+            t.status,
+            d.country,
+            d.city
+            FROM
+                trip t
+            INNER JOIN
+                    destination d ON t.destination_id = d.destination_id
+            WHERE 
+                t.rover_id = ?
+            ORDER BY 
+                t.start_date DESC";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $traveller_id);
+$stmt->bind_param("i", $rover_id);
 $stmt->execute();
 $result = $stmt->get_result();
 $trips = $result->fetch_all(MYSQLI_ASSOC);
@@ -61,7 +90,7 @@ $conn->close();
     </li>
 
     <li>
-      <a href="../createTrip.html">
+      <a href="createTrip.php">
         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M280-80v-100l120-84v-144L80-280v-120l320-224v-176q0-33 23.5-56.5T480-880q33 0 56.5 23.5T560-800v176l320 224v120L560-408v144l120 84v100l-200-60-200 60Z"/></svg>
         <span>Create Trip</span>
       </a>
@@ -104,7 +133,7 @@ $conn->close();
 <main>
   <section class='dashboard'>
     <h1>My Trips</h1>
-    <a href="../createTrip.html" class="btn-add" aria-label="Add new trip">
+    <a href="createTrip.php" class="btn-add" aria-label="Add new trip">
         <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M440-280h80v-160h160v-80H520v-160h-80v160H280v80h160v160Zm40 200q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>
     </a>
   </section>
@@ -112,21 +141,21 @@ $conn->close();
     <div class="class">
         <?php if (empty($trips)): ?>
         <div class="no_trips">
-            <p>You haven't created any trips yet. <a href="../createTrip.html">Create your first trip!</a></p>
+            <p>You haven't created any trips yet. <a href="createTrip.php">Create your first trip!</a></p>
         </div>
         <?php else: ?>
         <?php foreach ($trips as $trip): ?>
         <div class="trip_card">
             <div class="trip_header">
                 <h3><?php echo htmlspecialchars($trip['trip_name']) ?></h3>
-                <span class="trip_status"><?php echo ucfirst(isset($trip['status']) ? $trip['status'] : 'planned')?></span>
+                <span class="trip_status"><?php echo ucfirst(htmlspecialchars($trip['status']))?></span>
             </div>
             <div class="trip_details">
-                <p><strong>Destination: </strong><?php echo htmlspecialchars($trip['city'] . ', ' . $trip['country']); ?></p>
+                <p><strong>Destination: </strong><?php echo htmlspecialchars($trip['city']) . ', ' . htmlspecialchars($trip['country']);?></p>
                 <p><strong>Start Date:</strong> <?php echo date('M d, Y', strtotime($trip['start_date'])); ?></p>
                 <p><strong>End Date:</strong> <?php echo date('M d, Y', strtotime($trip['end_date'])); ?></p>
                 <?php if (isset($trip['total_budget'])): ?>
-                <p><strong>Budget:</strong> ₱<?php echo number_format($trip['total_budget'], 2) ?> </p>
+                    <p><strong>Budget:</strong> <?php echo $symbol; ?><?php echo number_format($trip['total_budget'], 2) ?> </p>
                 <?php endif; ?>
             </div>
             <div class="trip_actions">

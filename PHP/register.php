@@ -3,7 +3,7 @@
 $host = "localhost";
 $user = "root";
 $pass = "12345678";
-$dbname = "travelbudgetingapp";
+$dbname = "RoverWallet";
 
 // connect to mysql
 $conn = new mysqli($host, $user, $pass, $dbname);
@@ -14,12 +14,15 @@ if ($conn->connect_error) {
 }
 
 // Get form data
-$fullname = $_POST['fullname'];
+$first_name = $_POST['first_name'];
+$last_name = $_POST['last_name'];
+$phone_number = $_POST['phone_number'];
+$currency_code = $_POST['currency_code'];
 $email = $_POST['email'];
 $password = $_POST['password'];
 
 // check if email is already registered, if yes dont duplicate
-$sql = "SELECT * FROM traveller_table WHERE traveller_email = ?";
+$sql = "SELECT * FROM rover WHERE email = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $email);
 $stmt->execute();
@@ -32,12 +35,12 @@ if ($result->num_rows > 0) {
 }
 
 //prepare and execute SQL
-$sql = "INSERT INTO traveller_table (traveller_name, traveller_email, traveller_password) VALUES (?, ?, ?)";
+$sql = "INSERT INTO rover (first_name, last_name, phone_number, currency_code, email, password) VALUES (?, ?, ?, ?, ?, ?)";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sss", $fullname, $email, $password);
+$stmt->bind_param("ssssss", $first_name, $last_name, $phone_number, $currency_code, $email, $password);
 
 if ($stmt->execute()) {
-    // On success, redirect to createTrip.html
+    // On success, redirect to login.html
     header("Location: ../login.html"); // Assumes createTrip.html is one level up
     exit(); // IMPORTANT: Stops the script from running further
 } else {
@@ -46,4 +49,5 @@ if ($stmt->execute()) {
 
 $stmt->close();
 $conn->close();
+
 ?>

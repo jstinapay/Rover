@@ -7,6 +7,7 @@
     --text-clr: #e6e6ef;
     --accent-clr: #5e63ff;
     --secondary-text-clr: #b0b3c1;
+    --currency-symbol: "₱";
 }
 * {
     margin: 0;
@@ -223,15 +224,14 @@ input:focus, select:focus {
 }
 
 .input-wrapper::before {
-    content: "₱";
+    content: var(--currency-symbol);
     position: absolute;
     left: 10px;
     top: 10px;
-
-
     color: var(--secondary-text-clr);
     pointer-events: none;
 }
+
 .input-wrapper input {
     padding-left: 30px;
     box-sizing: border-box;

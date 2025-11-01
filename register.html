@@ -31,7 +31,7 @@
         </li>
 
         <li>
-            <a href="createTrip.html">
+            <a href="PHP/createTrip.php">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M280-80v-100l120-84v-144L80-280v-120l320-224v-176q0-33 23.5-56.5T480-880q33 0 56.5 23.5T560-800v176l320 224v120L560-408v144l120 84v100l-200-60-200 60Z"/></svg>
                 <span>Create Trip</span>
             </a>
@@ -77,14 +77,32 @@
         <p>Start your travel budgeting journey with Rover.</p>
 
         <form action="PHP/register.php" id="register-form" method="POST">
-            <label for="fullname">Full Name</label>
-            <input type="text" id="fullname" name="fullname" placeholder="Enter your full name" required>
+            <label for="first_name">First Name</label>
+            <input type="text" id="first_name" name="first_name" placeholder="Enter your first name" required>
+
+            <label for="last_name">Last Name</label>
+            <input type="text" id="last_name" name="last_name" placeholder="Enter your last name" required>
+
+            <label for="phone_number">Phone Number</label>
+            <input type="text" id="phone_number" name="phone_number" placeholder="Enter your phone number" required>
+
+            <label for="currency_code">Currency</label>
+            <select name="currency_code" id="currency_code">
+                <option value="">Select your preferred currency</option>
+                <option value="PHP">₱ - PHP</option>
+                <option value="USD">$ - USD</option>
+                <option value="EUR">€ - EUR</option>
+                <option value="JPY">¥ - JPY</option>
+                <option value="GBP">£ - GBP</option>
+                <option value="CNY">CN¥ - CNY</option>
+            </select>
 
             <label for="email">Email</label>
             <input type="email" id="email" name="email" placeholder="Enter your email" required>
 
             <label for="password">Password</label>
             <input type="password" id="password" name="password" placeholder="Enter your password" required>
+
             <button type="submit" class="submit-btn">Register</button>
             <p>Already have an account? <a href="login.html">Login</a></p>
         </form>

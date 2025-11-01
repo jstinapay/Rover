@@ -4,7 +4,7 @@ session_start();
 $host = "localhost";
 $user = "root";
 $pass = "12345678";
-$dbname = "travelbudgetingapp";
+$dbname = "RoverWallet";
 
 // connect to mysql
 $conn = new mysqli($host, $user, $pass, $dbname);
@@ -17,9 +17,9 @@ if ($conn->connect_error) {
 $email = $_POST['email'];
 $password = $_POST['password'];
 
-$sql = "SELECT traveller_id, traveller_name, traveller_email, traveller_password
-        FROM traveller_table
-        WHERE traveller_email = ?";
+$sql = "SELECT rover_id, first_name, email, password, currency_code
+        FROM rover
+        WHERE email = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $email);
 $stmt->execute();
@@ -27,9 +27,10 @@ $result = $stmt->get_result();
 
 if ($result->num_rows === 1) {
     $user = $result->fetch_assoc();
-    if ($user['traveller_password'] == $password) {
-        $_SESSION['traveller_id'] = $user['traveller_id'];
-        $_SESSION['traveller_name'] = $user['traveller_name'];
+    if ($user['password'] == $password) {
+        $_SESSION['rover_id'] = $user['rover_id'];
+        $_SESSION['first_name'] = $user['first_name'];
+        $_SESSION['currency_code'] = $user['currency_code'];
         header("Location: dashboard.php");
         exit();
     } else {
@@ -38,4 +39,4 @@ if ($result->num_rows === 1) {
 } else {
     echo "<p style = 'color: red'> Incorrect email>";
 }
-
+?>
