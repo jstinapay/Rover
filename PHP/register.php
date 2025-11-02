@@ -1,12 +1,12 @@
 <?php
 // Database connection settings
-$host = "localhost";
+$host = "yamanote.proxy.rlwy.net";
 $user = "root";
-$pass = "12345678";
-$dbname = "RoverWallet";
+$pass = "ussforDJGtKQAqXiQTHUnStcDIwpdTja";
+$dbname = "railway";
+$port = "40768";
 
-// connect to mysql
-$conn = new mysqli($host, $user, $pass, $dbname);
+$conn = new mysqli($host, $user, $pass, $dbname, $port);
 
 //check connection
 if ($conn->connect_error) {
