@@ -21,6 +21,8 @@ $currency_code = $_POST['currency_code'];
 $email = $_POST['email'];
 $password = $_POST['password'];
 
+$hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
 // check if email is already registered, if yes dont duplicate
 $sql = "SELECT * FROM rover WHERE email = ?";
 $stmt = $conn->prepare($sql);
@@ -29,15 +31,15 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
-    echo "<p style = 'color: red'> Email already registered>";
-    echo "<a href = '../register.html'> Go back to register page</a>";
+    echo "<script>alert('Email already registered');</script>";
+    echo "<script>window.location.href = '../register.html';</script>";
     exit();
 }
 
 //prepare and execute SQL
 $sql = "INSERT INTO rover (first_name, last_name, phone_number, currency_code, email, password) VALUES (?, ?, ?, ?, ?, ?)";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("ssssss", $first_name, $last_name, $phone_number, $currency_code, $email, $password);
+$stmt->bind_param("ssssss", $first_name, $last_name, $phone_number, $currency_code, $email, $hashed_password);
 
 if ($stmt->execute()) {
     // On success, redirect to login.html

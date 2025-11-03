@@ -27,16 +27,22 @@ $result = $stmt->get_result();
 
 if ($result->num_rows === 1) {
     $user = $result->fetch_assoc();
-    if ($user['password'] == $password) {
+    $hashed_password = $user['password'];
+
+    if (password_verify($password, $hashed_password)) {
         $_SESSION['rover_id'] = $user['rover_id'];
         $_SESSION['first_name'] = $user['first_name'];
         $_SESSION['currency_code'] = $user['currency_code'];
         header("Location: dashboard.php");
         exit();
     } else {
-        echo "<p style = 'color: red'> Incorrect password>";
+        echo "<script>alert('Incorrect email or password');</script>";;
+        echo "<script>window.location.href = '../login.html';</script>";
+        exit();
     }
 } else {
-    echo "<p style = 'color: red'> Incorrect email>";
+    echo "<script>alert('Incorrect email or password');</script>";
+    echo "<script>window.location.href = '../login.html';</script>";
+    exit();
 }
 ?>
