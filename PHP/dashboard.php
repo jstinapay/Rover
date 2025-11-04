@@ -160,8 +160,10 @@ $conn->close();
                 <?php endif; ?>
             </div>
             <div class="trip_actions">
-                <button class="btn_view" onclick="viewTrip(<?php echo $trip['trip_id']; ?>)">View Details</button>
-                <button class="btn_edit" onclick="editTrip(<?php echo $trip['trip_id']?>)">Edit</button>
+
+                <a href="view_trip.php?trip_id=<?php echo $trip['trip_id']; ?>" class="btn_view">View Details</a>
+
+                <a href="edit_trip.php?trip_id=<?php echo $trip['trip_id']; ?>" class="btn_edit">Edit</a>
             </div>
         </div>
         <?php endforeach; ?>

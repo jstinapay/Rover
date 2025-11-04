@@ -75,17 +75,28 @@
             $sql_trip = "INSERT INTO trip 
                 (rover_id, trip_name, destination_id, start_date, end_date, total_budget, status) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)";
-            $stmt = $conn->prepare($sql_trip);
-            $stmt->bind_param("isissds", $rover_id, $trip_name, $destination_id, $start_date, $end_date, $total_budget, $status);
-            if ($stmt->execute()) {
-                header("Location: dashboard.php");;
+            $stmt_trip = $conn->prepare($sql_trip);
+            $stmt_trip->bind_param("isissds", $rover_id, $trip_name, $destination_id, $start_date, $end_date, $total_budget, $status);
+            if ($stmt_trip->execute()) {
+                $trip_id = $conn->insert_id;
+                $default_categories = ["Food", "Transportation", "Accommodation", "Activities", "Emergency"];
+                $sql_category = "INSERT INTO category (trip_id, category_name, allocation_amount) VALUES (?, ?, 0.00);";
+                $stmt_category = $conn->prepare($sql_category);
+                $stmt_category->bind_param("is", $trip_id, $category_name);
+
+                foreach ($default_categories as $category_name) {
+                    $stmt_category->execute();
+                }
+                $stmt_category->close();
+                $stmt_trip->close();
+
+                header("Location: dashboard.php");
                 exit();
+
             } else {
-                echo "<script type='text/javascript'>alert('Error: " . $stmt->error . "');</script>";
-                $stmt->close();
+                echo "<script type='text/javascript'>alert('Error: " . $stmt_trip->error . "');</script>";
+                $stmt_trip->close();
             }
-        } else {
-            echo "<script type='text/javascript'>alert('Error: " . $stmt_destination->error . "');</script>";
         }
 
     }
