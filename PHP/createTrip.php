@@ -1,7 +1,7 @@
     <?php
     session_start();
 
-    // if the user is not logged in, redirect
+    // if the user is not logged in, redirect to login.php
     if (!isset($_SESSION['rover_id'])) {
         echo "<script type='text/javascript'>alert('You must be logged in to create a trip!');</script>";
         header("Location: ../login.html");
@@ -77,6 +77,7 @@
                 VALUES (?, ?, ?, ?, ?, ?, ?)";
             $stmt_trip = $conn->prepare($sql_trip);
             $stmt_trip->bind_param("isissds", $rover_id, $trip_name, $destination_id, $start_date, $end_date, $total_budget, $status);
+
             if ($stmt_trip->execute()) {
                 $trip_id = $conn->insert_id;
                 $default_categories = ["Food", "Transportation", "Accommodation", "Activities", "Emergency"];
@@ -109,12 +110,6 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Create Trip</title> <link rel="stylesheet" href="../CSS/createTrip.css">
-
-        <style>
-            :root {
-                --currency-symbol: "<?php echo $symbol; ?>";
-            }
-        </style>
 
         <script type="text/javascript" src="../JS/app.js" defer></script>
     </head>

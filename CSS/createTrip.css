@@ -238,3 +238,11 @@ input:focus, select:focus {
     width: 100%;
 }
 
+.cancel-link {
+    display: block;
+    text-align: center;
+    margin-top: 1em;
+    color: var(--secondary-text-clr);
+    text-decoration: none;
+}
+

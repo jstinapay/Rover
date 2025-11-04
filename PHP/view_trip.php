@@ -191,18 +191,25 @@ $conn->close();
         new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: labels, // Use your dynamic labels
+                labels: labels,
                 datasets: [{
                     label: 'Allocated Budget',
-                    data: data,   // Use your dynamic data
+                    data: data,
                     borderWidth: 1,
-                    // You can add colors here, e.g.:
+                    //neutral colors
                     backgroundColor: [
                         '#FF6384',
                         '#36A2EB',
                         '#FFCE56',
                         '#4BC0C0',
-                        '#9966FF'
+                        '#9966FF',
+                        '#6A8EAE',
+                        '#A6B9C1',
+                        '#E8D5B5',
+                        '#D9B4A9',
+                        '#7E8D85',
+                        '#C1CCD3'
+
                     ]
                 }]
             },
