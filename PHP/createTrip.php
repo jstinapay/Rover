@@ -217,6 +217,7 @@
                 </div>
 
                 <button type="submit" class="submit-btn">Create Trip</button>
+                <a href="dashboard.php" class="cancel-link">Cancel</a>
             </form>
         </section>
     </main>

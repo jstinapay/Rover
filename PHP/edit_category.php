@@ -1,18 +1,19 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['rover_id'])) {
+if(!isset($_SESSION['rover_id'])) {
     header("Location: ../login.html");
     exit();
 }
 
-if (!isset($_GET['trip_id'])) {
+
+if(!isset($_GET['category_id'])) {
     header("Location: dashboard.php");
     exit();
 }
 
-$trip_id = $_GET['trip_id'];
 $rover_id = $_SESSION['rover_id'];
+$category_id = $_GET['category_id'];
 
 $host = "yamanote.proxy.rlwy.net";
 $user = "root";
@@ -39,90 +40,54 @@ $currency_symbols = [
 
 $symbol = isset($currency_symbols[$currency_code]) ? $currency_symbols[$currency_code] : '$';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $trip_name = $_POST['trip_name'];
-    $region = $_POST['region'];
-    $country = $_POST['country'];
-    $city = $_POST['city'];
-    $start_date = $_POST['start_date'];
-    $end_date = $_POST['end_date'];
-    $total_budget = $_POST['total_budget'];
-    $destination_id = $_POST['destination_id'];
+$error_message = "";
+$category = [];
 
-    $sql_dest = "UPDATE destination 
-                 SET 
-                     region = ?, 
-                     country = ?, 
-                     city = ? 
-                 WHERE destination_id = ?";
-    $stmt_dest = $conn->prepare($sql_dest);
-    $stmt_dest->bind_param("sssi", $region, $country, $city, $destination_id);
-    $stmt_dest->execute();
-    $stmt_dest->close();
-
-    // check date for status
-    $today = new DateTime('today'); // Gets today's date at 00:00:00
-    $status = "planned"; // Default status
-
-    if (!empty($start_date)) {
-        $start_date_obj = new DateTime($start_date);
-        // If start date is today or in the past, it's 'active'
-        if ($start_date_obj <= $today) {
-            $status = "active";
-        }
-    }
-
-    if (!empty($end_date)) {
-        $end_date_obj = new DateTime($end_date);
-        // If end date is in the past, it's 'completed' (this overrides 'active' or 'planned')
-        if ($end_date_obj < $today) {
-            $status = "completed";
-        }
-    }
-
-    $sql_trip = "UPDATE trip 
-                 SET 
-                     trip_name = ?, 
-                     start_date = ?,
-                     end_date = ?, 
-                     total_budget = ?,
-                     status = ?
-                 WHERE trip_id = ?
-                 AND rover_id = ?  ";
-    $stmt_trip = $conn->prepare($sql_trip);
-    $stmt_trip->bind_param("sssdsii", $trip_name, $start_date, $end_date, $total_budget, $status, $trip_id, $rover_id);
-
-    if ($stmt_trip->execute()) {
-        // Success! Redirect back to the dashboard.
-        header("Location: dashboard.php");
-        exit();
-    } else {
-        $error_message = "Error updating trip: " . $stmt_trip->error;
-    }
-    $stmt_trip->close();
-
-} else {
-    // 5. (IF THIS IS A GET REQUEST) FETCH CURRENT DATA TO FILL THE FORM
-
-    // This query joins trip and destination to get all data
-    $sql_get = "SELECT t.*, d.region, d.country, d.city 
-                FROM trip t
-                JOIN destination d ON t.destination_id = d.destination_id
-                WHERE t.trip_id = ? AND t.rover_id = ?";
-
+   $sql_get = "SELECT c.category_name, c.allocation_amount, t.trip_id
+            FROM category c JOIN trip t ON c.trip_id = t.trip_id 
+            WHERE t.rover_id = ?
+            AND c.category_id = ?;";
     $stmt_get = $conn->prepare($sql_get);
-    $stmt_get->bind_param("ii", $trip_id, $rover_id);
+    $stmt_get->bind_param("ii", $rover_id, $category_id);
     $stmt_get->execute();
     $result = $stmt_get->get_result();
 
     if ($result->num_rows == 0) {
-        echo "Trip not found or you do not have permission.";
+        echo "Error: Category not found or you do not have permission";
+        $stmt_get->close();
+        $conn->close();
         exit();
     }
-    $trip = $result->fetch_assoc();
-}
+    $category = $result->fetch_assoc();
+    $stmt_get->close();
 
+
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST'){
+    $category_name = $_POST['category_name'];
+    $allocation_amount = $_POST['allocation_amount'];
+
+    $sql_update = "UPDATE category c
+            JOIN trip t ON c.trip_id = t.trip_id
+            SET 
+            c.category_name = ?,
+            c.allocation_amount = ?
+            WHERE t.rover_id = ?
+            AND c.category_id = ?;";
+    $stmt = $conn->prepare($sql_update);
+    $stmt->bind_param("sdii", $category_name, $allocation_amount, $rover_id, $category_id);
+
+    if ($stmt->execute()) {
+        header("Location: view_trip.php?trip_id=" . $category['trip_id']);
+        exit();
+    } else {
+        $error_message = "Update Failed: " . $stmt->error;
+    }
+    $stmt->close();    
+
+} 
 $conn->close();
+
 ?>
 
 <!DOCTYPE html>
@@ -200,56 +165,34 @@ $conn->close();
 </nav>
     <main>
         <section class="createTrip-section">
-            <h1>Edit Trip</h1>
-            <p>Update the details for your trip</p>
+            <h1>Edit Category</h1>
+            <p>Update the category for your trip</p>
 
             <?php if (isset($error_message)): ?>
                 <div class="error-message"><?php echo $error_message; ?></div>
             <?php endif; ?>
 
-            <form action="edit_trip.php?trip_id=<?php echo $trip_id; ?>" method="POST">
+            <form action="edit_category.php?category_id=<?php echo $category_id; ?>" method="POST">
 
-                <input type="hidden" name="destination_id" value="<?php echo $trip['destination_id']; ?>">
+                <input type="hidden" name="trip_id" value="<?php echo $category['category_id']; ?>">
 
-                <label for="trip_name">Trip Name</label>
-                <input type="text" id="trip_name" name="trip_name"
-                       value="<?php echo htmlspecialchars($trip['trip_name']); ?>" required>
+                <label for="category_name">Category Name</label>
+                <input type="text" id="category_name" name="category_name"
+                       value="<?php echo htmlspecialchars($category['category_name']); ?>" required>
 
-                <label for="region">Region</label>
-                <select id="region" name="region" required>
-                    <option value="Asia" <?php if ($trip['region'] == 'Asia') echo 'selected'; ?>>Asia</option>
-                    <option value="Europe" <?php if ($trip['region'] == 'Europe') echo 'selected'; ?>>Europe</option>
-                    <option value="North America" <?php if ($trip['region'] == 'North America') echo 'selected'; ?>>North America</option>
-                    <option value="South America" <?php if ($trip['region'] == 'South America') echo 'selected'; ?>>South America</option>
-                    <option value="Africa" <?php if ($trip['region'] == 'Africa') echo 'selected'; ?>>Africa</option>
-                    <option value="Australia" <?php if ($trip['region'] == 'Australia') echo 'selected'; ?>>Australia</option>
-                    <option value="Antarctica" <?php if ($trip['region'] == 'Antarctica') echo 'selected'; ?>>Antarctica</option>
-                </select>
-
-                <label for="country">Country</label>
-                <input type="text" id="country" name="country"
-                       value="<?php echo htmlspecialchars($trip['country']); ?>" required>
-
-                <label for="city">City</label>
-                <input type="text" id="city" name="city"
-                       value="<?php echo htmlspecialchars($trip['city']); ?>" required>
-
-                <label for="start_date">Start Date</label>
-                <input type="date" id="start_date" name="start_date"
-                       value="<?php echo htmlspecialchars($trip['start_date']); ?>" required>
-
-                <label for="end_date">End Date</label>
-                <input type="date" id="end_date" name="end_date"
-                       value="<?php echo htmlspecialchars($trip['end_date']); ?>" required>
-
-                <label for="total_budget">Total Budget</label>
-                <input type="number" id="total_budget" name="total_budget" step="0.01" min="0"
-                       value="<?php echo htmlspecialchars($trip['total_budget']); ?>" required>
+                <label for="allocation_amount">Budget</label>
+                <input type="number" id="allocation_amount" name="allocation_amount" step="0.01" min="0"
+                       value="<?php echo htmlspecialchars($category['allocation_amount']); ?>" required>
 
                 <button type="submit" class="submit-btn">Save Changes</button>
-                <a href="dashboard.php" class="cancel-link">Cancel</a>
+                <a href="view_trip.php?trip_id=<?php echo $category['trip_id']; ?>" class="cancel-link">Cancel</a>
             </form>
         </section>
     </main>
     </body>
     </html>
+
+
+
+
+

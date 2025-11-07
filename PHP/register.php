@@ -37,7 +37,8 @@ if ($result->num_rows > 0) {
 }
 
 //prepare and execute SQL
-$sql = "INSERT INTO rover (first_name, last_name, phone_number, currency_code, email, password) VALUES (?, ?, ?, ?, ?, ?)";
+$sql = "INSERT INTO rover (first_name, last_name, phone_number, currency_code, email, password) 
+        VALUES (?, ?, ?, ?, ?, ?)";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("ssssss", $first_name, $last_name, $phone_number, $currency_code, $email, $hashed_password);
 

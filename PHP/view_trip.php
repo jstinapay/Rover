@@ -228,9 +228,10 @@ $conn->close();
     <div class="category-container">
 
         <?php foreach ($categories as $category): ?>
-            <a href="view_category.php?category_id=<?php echo $category['category_id']; ?>" class="category-card">
+            <a onclick="edit_category.php" href="edit_category.php?category_id=<?php echo $category['category_id']; ?>" class="category-card" method="POST">
                 <h4><?php echo htmlspecialchars($category['category_name']); ?></h4>
                 <p>Budget: <?php echo $symbol; ?><?php echo number_format($category['allocation_amount'], 2); ?></p>
+                
             </a>
         <?php endforeach; ?>
 
