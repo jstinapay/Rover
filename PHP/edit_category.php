@@ -104,7 +104,7 @@ $conn->close();
         <ul>
 
             <li>
-                <span class = "logo">rover</span>
+                <span class = "logo">Rover</span>
                 <button onclick=toggleSidebar() id="toggle-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M440-240 200-480l240-240 56 56-183 184 183 184-56 56Zm264 0L464-480l240-240 56 56-183 184 183 184-56 56Z"/></svg>
                 </button>
@@ -181,8 +181,11 @@ $conn->close();
                        value="<?php echo htmlspecialchars($category['category_name']); ?>" required>
 
                 <label for="allocation_amount">Budget</label>
-                <input type="number" id="allocation_amount" name="allocation_amount" step="0.01" min="0"
+                <div class="input-wrapper">
+                      <input type="number" id="allocation_amount" name="allocation_amount" step="0.01" min="0"
                        value="<?php echo htmlspecialchars($category['allocation_amount']); ?>" required>
+                </div>
+              
 
                 <button type="submit" class="submit-btn">Save Changes</button>
                 <a href="view_trip.php?trip_id=<?php echo $category['trip_id']; ?>" class="cancel-link">Cancel</a>
