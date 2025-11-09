@@ -27,7 +27,7 @@ if ($conn->connect_error) {
     die("Connection Failed: " . $conn->connect_error);
 }
 
-$sql = "DELETE FROM trips WHERE trip_id = ? AND rover_id = ?";
+$sql = "DELETE FROM trip WHERE trip_id = ? AND rover_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("ii", $trip_id, $rover_id);
  
