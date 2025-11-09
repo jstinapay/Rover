@@ -64,6 +64,7 @@ $stmt_categories->bind_param("i", $trip_id);
 $stmt_categories->execute();
 $result_categories = $stmt_categories->get_result();
 $categories =$result_categories->fetch_all(MYSQLI_ASSOC);
+$stmt_categories->close();
 
 $sql_sum = "SELECT SUM(allocation_amount) AS total_allocated
             FROM category
@@ -73,6 +74,7 @@ $stmt_sum->bind_param("i", $trip_id);
 $stmt_sum->execute();
 $result_sum = $stmt_sum->get_result()->fetch_assoc();
 $total_allocated = isset($result_sum['total_allocated']) ? $result_sum['total_allocated'] : 0.00;
+$stmt_sum->close();
 
 $conn->close();
 ?>
@@ -233,8 +235,9 @@ $conn->close();
                 <p>Budget: <?php echo $symbol; ?><?php echo number_format($category['allocation_amount'], 2); ?></p>  
 
                 <div class="category_actions">
+                <a href="view_category.php?category_id=<?php echo $category['category_id']; ?>" class="view-button">View</a>
                 <a href="edit_category.php?category_id=<?php echo $category['category_id']; ?>" class="edit-button">Edit</a>
-                <a href="delete_category.php?category_id=<?php echo $category['category_id']; ?>&trip_id=<?php echo $trip_id; ?>" class="delete-button" onclick="return confirm('Are you sure you want to delete this category? This action cannot be undone.');">Delete</a>
+                <a href="delete_category.php?category_id=<?php echo $category['category_id']; ?>" class="delete-button" onclick="return confirm('Are you sure you want to delete this category? This action cannot be undone.');">Delete</a>
                 </div>
             </div>
             

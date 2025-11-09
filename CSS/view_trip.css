@@ -262,6 +262,19 @@ main p {
     font-size: 0.9rem;
     cursor: pointer;
 }
+.view-button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    background-color: var(--accent-clr);
+    color: var(--text-clr);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.view-button:hover {
+    background: #FFB300;
+}
 .edit-button:hover {
     background: #FFB300;
 }
