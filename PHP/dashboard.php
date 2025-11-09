@@ -161,9 +161,11 @@ $conn->close();
             </div>
             <div class="trip_actions">
 
-                <a href="view_trip.php?trip_id=<?php echo $trip['trip_id']; ?>" class="btn_view">View Details</a>
+                <a href="view_trip.php?trip_id=<?php echo $trip['trip_id']; ?>" class="btn_view">View</a>
 
                 <a href="edit_trip.php?trip_id=<?php echo $trip['trip_id']; ?>" class="btn_edit">Edit</a>
+
+                <a href="delete_trip.php?trip_id=<?php echo $trip['trip_id']; ?>" class="btn_delete" onclick="return confirm('Are you sure you want to delete this trip? This action cannot be undone.');">Delete</a>
             </div>
         </div>
         <?php endforeach; ?>

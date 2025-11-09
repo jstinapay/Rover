@@ -238,3 +238,34 @@ main p {
     background-color: #1f212e;
 
 }
+.category_actions {
+    display: flex;
+    gap: 10px;
+}
+.edit-button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    background-color: var(--accent-clr);
+    color: var(--text-clr);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.delete-button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    background-color: var(--accent-clr);
+    color: var(--text-clr);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.edit-button:hover {
+    background: #FFB300;
+}
+
+.delete-button:hover {
+    background: #cc0000;
+}

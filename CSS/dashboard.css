@@ -243,7 +243,7 @@ main p {
     margin-top: 15px;
 }
 
-.btn_view, .btn_edit {
+.btn_view, .btn_edit, .btn_delete {
     padding: 8px 16px;
     border: none;
     border-radius: 5px;
@@ -258,7 +258,7 @@ main p {
 }
 
 .btn_view:hover {
-    background: var(--button-hover-clr);
+    background: #FFB300;
 }
 
 .btn_edit {
@@ -268,6 +268,15 @@ main p {
 
 .btn_edit:hover {
     background: #FFB300;
+}
+
+.btn_delete {
+    margin-left: auto;
+    background: var(--accent-clr);
+    color: var(--text-clr);
+}
+.btn_delete:hover {
+    background: #cc0000;
 }
 
 .no_trips {

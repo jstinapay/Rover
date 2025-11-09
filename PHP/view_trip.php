@@ -228,11 +228,16 @@ $conn->close();
     <div class="category-container">
 
         <?php foreach ($categories as $category): ?>
-            <a onclick="edit_category.php" href="edit_category.php?category_id=<?php echo $category['category_id']; ?>" class="category-card" method="POST">
+            <div class="category-card">
                 <h4><?php echo htmlspecialchars($category['category_name']); ?></h4>
-                <p>Budget: <?php echo $symbol; ?><?php echo number_format($category['allocation_amount'], 2); ?></p>
-                
-            </a>
+                <p>Budget: <?php echo $symbol; ?><?php echo number_format($category['allocation_amount'], 2); ?></p>  
+
+                <div class="category_actions">
+                <a href="edit_category.php?category_id=<?php echo $category['category_id']; ?>" class="edit-button">Edit</a>
+                <a href="delete_category.php?category_id=<?php echo $category['category_id']; ?>&trip_id=<?php echo $trip_id; ?>" class="delete-button" onclick="return confirm('Are you sure you want to delete this category? This action cannot be undone.');">Delete</a>
+                </div>
+            </div>
+            
         <?php endforeach; ?>
 
         <a href="add_category.php?trip_id=<?php echo $trip_id; ?>" class="category-card-add">
