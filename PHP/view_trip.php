@@ -67,6 +67,14 @@ $result_sum = $stmt_sum->get_result()->fetch_assoc();
 $total_allocated = isset($result_sum['total_allocated']) ? $result_sum['total_allocated'] : 0.00;
 $stmt_sum->close();
 
+$sql_expenses = "SELECT * FROM expense WHERE trip_id = ? ORDER BY expense_date DESC";
+$stmt_expenses = $conn->prepare($sql_expenses);
+$stmt_expenses->bind_param("i", $trip_id);
+$stmt_expenses->execute();
+$result_expenses = $stmt_expenses->get_result();
+$expenses = $result_expenses->fetch_all(MYSQLI_ASSOC);
+$stmt_expenses->close();
+
 $conn->close();
 ?>
 
@@ -238,6 +246,60 @@ $conn->close();
             <span>+ Add Category</span>
         </a>
     </div>
+
+    <div class="expenses-container">
+    
+    <div class="expenses-container">
+    <div class="expenses-header">
+        <h2>Expenses</h2>
+        <div class="add-expense-button">
+            <a href="add_expense.php">+ Add Expense</a>
+        </div>
+    </div>
+    
+    <div class="expenses-table-wrapper">
+        <table class="expenses-table">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Expense Name</th>
+                    <th>Price (<?php echo $symbol; ?>)</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (!empty($expenses)): ?>
+                    <?php foreach ($expenses as $expense): ?>
+                        <?php
+                        $cat_name = '';
+                        foreach ($categories as $cat) {
+                            if ($cat['category_id'] == $expense['category_id']) {
+                                $cat_name = $cat['category_name'];
+                                break;
+                            }
+                        }
+                        ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($cat_name); ?></td>
+                            <td><?php echo htmlspecialchars($expense['expense_name']); ?></td>
+                            <td><?php echo number_format($expense['expense_amount'], 2); ?></td>
+                            <td><?php echo date('M d, Y', strtotime($expense['expense_date'])); ?></td>
+                            <td>
+                                <a href="edit_expense.php?expense_id=<?php echo $expense['expense_id']; ?>" class="edit-expense">Edit</a>
+                                <a href="delete_expense.php?expense_id=<?php echo $expense['expense_id']; ?>" class="delete-expense" onclick="return confirm('Are you sure you want to delete this expense?');">Delete</a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="5">No expenses logged yet.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
 </main>
 </body>
 </html>

@@ -282,3 +282,193 @@ main p {
 .delete-button:hover {
     background: #cc0000;
 }
+
+
+.expenses-container {
+    margin: 3em auto;
+    max-width: 1200px;
+    padding: 0 20px;
+}
+
+.expenses-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.expenses-header h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 28px;
+}
+
+.add-expense-button a {
+    display: inline-block;
+    padding: 12px 24px;
+    background-color: #36A2EB;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(54, 162, 235, 0.3);
+}
+
+.add-expense-button a:hover {
+    background-color: #2a81c6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(54, 162, 235, 0.4);
+}
+
+.expenses-table-wrapper {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.expenses-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.expenses-table thead {
+    background: rgba(54, 162, 235, 0.2);
+}
+
+.expenses-table th {
+    padding: 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #36A2EB;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid rgba(54, 162, 235, 0.3);
+}
+
+/* Fixed column widths */
+.expenses-table th:nth-child(1),
+.expenses-table td:nth-child(1) {
+    width: 15%;
+}
+
+.expenses-table th:nth-child(2),
+.expenses-table td:nth-child(2) {
+    width: 30%;
+}
+
+.expenses-table th:nth-child(3),
+.expenses-table td:nth-child(3) {
+    width: 15%;
+}
+
+.expenses-table th:nth-child(4),
+.expenses-table td:nth-child(4) {
+    width: 18%;
+}
+
+.expenses-table th:nth-child(5),
+.expenses-table td:nth-child(5) {
+    width: 22%;
+}
+
+.expenses-table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background-color 0.2s ease;
+}
+
+.expenses-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.expenses-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.expenses-table td {
+    padding: 16px;
+    color: #e0e0e0;
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.expenses-table td:nth-child(3) {
+    font-weight: 600;
+    color: #fff;
+}
+
+.expenses-table .edit-expense,
+.expenses-table .delete-expense {
+    display: inline-block;
+    padding: 6px 14px;
+    margin-right: 8px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.expenses-table .edit-expense {
+    background-color: rgba(54, 162, 235, 0.2);
+    color: #36A2EB;
+    border: 1px solid rgba(54, 162, 235, 0.4);
+}
+
+.expenses-table .edit-expense:hover {
+    background-color: rgba(54, 162, 235, 0.3);
+    border-color: #36A2EB;
+}
+
+.expenses-table .delete-expense {
+    background-color: rgba(255, 99, 132, 0.2);
+    color: #ff6384;
+    border: 1px solid rgba(255, 99, 132, 0.4);
+}
+
+.expenses-table .delete-expense:hover {
+    background-color: rgba(255, 99, 132, 0.3);
+    border-color: #ff6384;
+}
+
+/* Empty state styling */
+.expenses-table tbody tr td[colspan="5"] {
+    text-align: center;
+    padding: 40px;
+    color: #888;
+    font-style: italic;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .expenses-container {
+        padding: 0 10px;
+    }
+    
+    .expenses-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+    
+    .expenses-table {
+        font-size: 12px;
+    }
+    
+    .expenses-table th,
+    .expenses-table td {
+        padding: 12px 8px;
+    }
+    
+    .expenses-table .edit-expense,
+    .expenses-table .delete-expense {
+        padding: 4px 10px;
+        font-size: 12px;
+        margin-right: 4px;
+    }
+}

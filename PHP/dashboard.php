@@ -158,6 +158,7 @@ $conn->close();
 
                 <a href="delete_trip.php?trip_id=<?php echo $trip['trip_id']; ?>" class="btn_delete" onclick="return confirm('Are you sure you want to delete this trip? This action cannot be undone.');">Delete</a>
             </div>
+            
         </div>
         <?php endforeach; ?>
         <?php endif; ?>
