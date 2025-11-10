@@ -1,19 +1,62 @@
+<?php
+session_start();
+
+if (!isset($_SESSION['rover_id'])) {
+    header("Location: ../login.html");
+    exit();
+}
+$rover_id = $_SESSION['rover_id'];
+
+$host = "yamanote.proxy.rlwy.net";
+$user = "root";
+$pass = "ussforDJGtKQAqXiQTHUnStcDIwpdTja";
+$dbname = "railway";
+$port = "40768";
+$conn = new mysqli($host, $user, $pass, $dbname, $port);
+if ($conn->connect_error) {
+    die("Connection Failed: " . $conn->connect_error);
+}
+
+// 1. Fetch User Details (including new columns)
+$sql_user = "SELECT first_name, last_name, email, phone_number, currency_code 
+             FROM rover 
+             WHERE rover_id = ?";
+$stmt_user = $conn->prepare($sql_user);
+$stmt_user->bind_param("i", $rover_id);
+$stmt_user->execute();
+$user = $stmt_user->get_result()->fetch_assoc();
+$stmt_user->close();
+
+// 2. Fetch Payment Methods
+$sql_methods = "SELECT payment_method_id, payment_method_name 
+                FROM payment_method 
+                WHERE rover_id = ?";
+$stmt_methods = $conn->prepare($sql_methods);
+$stmt_methods->bind_param("i", $rover_id);
+$stmt_methods->execute();
+$payment_methods = $stmt_methods->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt_methods->close();
+
+$conn->close();
+
+// Helper variable for empty fields
+$phone = $user['phone_number'] ? htmlspecialchars($user['phone_number']) : '<i>Not set</i>';
+$currency = $user['currency_code'] ? htmlspecialchars($user['currency_code']) : 'USD';
+?>
+
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Trip</title>
-    <link rel="stylesheet" href="../CSS/createTrip.css">
+    <title>My Profile</title>
 
-    <style>
-            :root {
-                --currency-symbol: "<?php echo $symbol; ?>";
-            }
-        </style>
-
+    <link rel="stylesheet" href="../CSS/profile.css">
     <script type="text/javascript" src="../JS/app.js" defer></script>
+
+
 </head>
 
 <body>
@@ -114,42 +157,59 @@
 
         </ul>
     </nav>
-    <main>
-        <section class="createTrip-section">
-            <h1>Add Expense</h1>
-            <p>Log an expense for this trip.</p>
 
-            <?php if (!empty($error_message)): ?>
-                <div class="error-message"><?php echo htmlspecialchars($error_message); ?></div>
+ <main>
+    <h1>My Profile</h1>
+
+    <div class="profile-card">
+        <div class="profile-info">
+            <h3><?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?></h3>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <span>Email</span>
+                    <p><?php echo htmlspecialchars($user['email']); ?></p>
+                </div>
+                <div class="info-item">
+                    <span>Phone</span>
+                    <p><?php echo $phone; ?></p>
+                </div>
+                <div class="info-item">
+                    <span>Currency</span>
+                    <p><?php echo $currency; ?></p>
+                </div>
+            </div>
+        </div>
+        <div class="profile-actions">
+            <a href="edit_profile.php" class="btn-edit">Edit Profile</a>
+        </div>
+    </div>
+
+    <div class="payment-methods-panel">
+        <div class="payment-header">
+            <h2>Payment Methods</h2>
+            <a href="add_payment_method.php" class="btn-add">+ Add New</a>
+        </div>
+
+        <ul class="payment-list">
+            <?php if (empty($payment_methods)): ?>
+                <li class="payment-item-empty">No payment methods added yet.</li>
+            <?php else: ?>
+                <?php foreach ($payment_methods as $method): ?>
+                    <li class="payment-item">
+                        <span><?php echo htmlspecialchars($method['payment_method_name']); ?></span>
+                        <a href="delete_payment_method.php?id=<?php echo $method['payment_method_id']; ?>" 
+                           class="btn-delete" 
+                           onclick="return confirm('Are you sure?');">
+                           Delete
+                        </a>
+                    </li>
+                <?php endforeach; ?>
             <?php endif; ?>
+        </ul>
+    </div>
+</main>
 
-            <form action="add_category.php?trip_id=<?php echo htmlspecialchars($trip_id); ?>" method="POST">
-                <input type="hidden" name="trip_id" value="<?php echo htmlspecialchars($trip_id); ?>">
-
-                <label for="expense_name">Expense Name</label>
-                <input type="text" id="expense_name" name="expense_name" placeholder="Enter expense name" required>
-
-                <label for="expense_category">Category</label>
-                <input type="text" id="expense_category" name="expense_category" placeholder="Enter expense category" required>
-
-                <label for="expense_date">Date</label>
-                <div class="input-wrapper">
-                    <input type="date" min="0" step=".01" id="expense_date" name="expense_date" placeholder="Enter expense date" required>
-                </div>
-
-                <label for="expense_amount">Amount</label>
-                <div class="input-wrapper">
-                    <input type="number" min="0" step=".01" id="expense_amount" name="expense_amount" placeholder="Enter expense amount" required>
-                </div>
-
-                <label for="payment_method">Payment Method</label>
-                <input type="text" id="payment_method" name="payment_method" placeholder="Enter payment method">
-
-                <button type="submit" class="submit-btn">Log Expense</button>
-                <a href="view_trip.php?trip_id=<?php echo htmlspecialchars($trip_id); ?>" class="cancel-link">Cancel</a>
-            </form>
-        </section>
-    </main>
 </body>
 
 </html>

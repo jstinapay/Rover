@@ -299,26 +299,24 @@ main p {
 
 .expenses-header h2 {
     margin: 0;
-    color: #fff;
+    color: var(--accent-clr);
     font-size: 28px;
 }
 
 .add-expense-button a {
     display: inline-block;
     padding: 12px 24px;
-    background-color: #36A2EB;
+    background-color: var(--accent-clr);
     color: #fff;
     text-decoration: none;
     border-radius: 8px;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(54, 162, 235, 0.3);
 }
 
 .add-expense-button a:hover {
-    background-color: #2a81c6;
+    background-color: var(--button-hover-clr);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(54, 162, 235, 0.4);
 }
 
 .expenses-table-wrapper {
@@ -335,18 +333,18 @@ main p {
 }
 
 .expenses-table thead {
-    background: rgba(54, 162, 235, 0.2);
+    background: var(--accent-clr);
 }
 
 .expenses-table th {
     padding: 16px;
     text-align: left;
     font-weight: 600;
-    color: #36A2EB;
+    color: var(--text-clr);
     text-transform: uppercase;
     font-size: 13px;
     letter-spacing: 0.5px;
-    border-bottom: 2px solid rgba(54, 162, 235, 0.3);
+    border-bottom: 2px solid var(--line-clr);
 }
 
 /* Fixed column widths */
@@ -376,7 +374,7 @@ main p {
 }
 
 .expenses-table tbody tr {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--line-clr);
     transition: background-color 0.2s ease;
 }
 
