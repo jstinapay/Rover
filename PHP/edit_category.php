@@ -97,6 +97,12 @@ $conn->close();
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Create Trip</title> <link rel="stylesheet" href="../CSS/createTrip.css">
 
+        <style>
+            :root {
+                --currency-symbol: "<?php echo $symbol; ?>";
+            }
+        </style>
+
         <script type="text/javascript" src="../JS/app.js" defer></script>
     </head>
     <body>

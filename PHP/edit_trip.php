@@ -132,6 +132,12 @@ $conn->close();
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Create Trip</title> <link rel="stylesheet" href="../CSS/createTrip.css">
 
+        <style>
+            :root {
+                --currency-symbol: "<?php echo $symbol; ?>";
+            }
+        </style>
+
         <script type="text/javascript" src="../JS/app.js" defer></script>
     </head>
     <body>
@@ -243,9 +249,11 @@ $conn->close();
                        value="<?php echo htmlspecialchars($trip['end_date']); ?>" required>
 
                 <label for="total_budget">Total Budget</label>
-                <input type="number" id="total_budget" name="total_budget" step="0.01" min="0"
+                <div class="input-wrapper">
+                    <input type="number" id="total_budget" name="total_budget" step="0.01" min="0"
                        value="<?php echo htmlspecialchars($trip['total_budget']); ?>" required>
-
+                </div>
+                
                 <button type="submit" class="submit-btn">Save Changes</button>
                 <a href="dashboard.php" class="cancel-link">Cancel</a>
             </form>
