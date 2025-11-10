@@ -16,12 +16,6 @@ require_once 'connect.php';
 $rover_id = $_SESSION['rover_id'];
 $category_id = $_GET['category_id'];
 
-$conn = new mysqli($host, $user, $pass, $dbname, $port);
-
-if ($conn->connect_error) {
-    die("Connection Failed: " . $conn->connect_error);
-}
-
 $currency_code = isset($_SESSION['currency_code']) ? $_SESSION['currency_code'] : 'USD';
 
 $currency_symbols = [
