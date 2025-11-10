@@ -228,7 +228,7 @@ $conn->close();
                 <div class="category_actions">
                 <a href="view_category.php?category_id=<?php echo $category['category_id']; ?>" class="view-button">View</a>
                 <a href="edit_category.php?category_id=<?php echo $category['category_id']; ?>" class="edit-button">Edit</a>
-                <a href="delete_category.php?category_id=<?php echo $category['category_id']; ?>" class="delete-button" onclick="return confirm('Are you sure you want to delete this category? This action cannot be undone.');">Delete</a>
+                <a href="delete_category.php?category_id=<?php echo $category['category_id']; ?>&trip_id=<?php echo $trip_id; ?>" class="delete-button" onclick="return confirm('Are you sure you want to delete this category? This action cannot be undone.');">Delete</a>
                 </div>
             </div>
             
