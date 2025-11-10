@@ -11,20 +11,9 @@ if (!isset($_GET['trip_id'])) {
     exit();
 }
 
-$trip_id = $_GET['trip_id'];
+require_once 'connect.php';
 $rover_id = $_SESSION['rover_id'];
-
-$host = "yamanote.proxy.rlwy.net";
-$user = "root";
-$pass = "ussforDJGtKQAqXiQTHUnStcDIwpdTja";
-$dbname = "railway";
-$port = "40768";
-
-$conn = new mysqli($host, $user, $pass, $dbname, $port);
-
-if ($conn->connect_error) {
-    die("Connection Failed: " . $conn->connect_error);
-}
+$trip_id = $_GET['trip_id'];
 
 $currency_code = isset($_SESSION['currency_code']) ? $_SESSION['currency_code'] : 'USD';
 

@@ -1,18 +1,6 @@
 <?php
 session_start();
-// Database connection settings
-$host = "yamanote.proxy.rlwy.net";
-$user = "root";
-$pass = "ussforDJGtKQAqXiQTHUnStcDIwpdTja";
-$dbname = "railway";
-$port = "40768";
-
-$conn = new mysqli($host, $user, $pass, $dbname, $port);
-
-//check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+require_once 'connect.php';
 
 $email = $_POST['email'];
 $password = $_POST['password'];

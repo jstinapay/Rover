@@ -12,14 +12,9 @@ if(!isset($_GET['category_id'])) {
     exit();
 }
 
+require_once 'connect.php';
 $rover_id = $_SESSION['rover_id'];
 $category_id = $_GET['category_id'];
-
-$host = "yamanote.proxy.rlwy.net";
-$user = "root";
-$pass = "ussforDJGtKQAqXiQTHUnStcDIwpdTja";
-$dbname = "railway";
-$port = "40768";
 
 $conn = new mysqli($host, $user, $pass, $dbname, $port);
 
