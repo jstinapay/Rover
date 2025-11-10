@@ -17,7 +17,6 @@ if ($conn->connect_error) {
     die("Connection Failed: " . $conn->connect_error);
 }
 
-// 1. Fetch User Details (including new columns)
 $sql_user = "SELECT first_name, last_name, email, phone_number, currency_code 
              FROM rover 
              WHERE rover_id = ?";
@@ -27,7 +26,6 @@ $stmt_user->execute();
 $user = $stmt_user->get_result()->fetch_assoc();
 $stmt_user->close();
 
-// 2. Fetch Payment Methods
 $sql_methods = "SELECT payment_method_id, payment_method_name 
                 FROM payment_method 
                 WHERE rover_id = ?";
@@ -38,10 +36,6 @@ $payment_methods = $stmt_methods->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt_methods->close();
 
 $conn->close();
-
-// Helper variable for empty fields
-$phone = $user['phone_number'] ? htmlspecialchars($user['phone_number']) : '<i>Not set</i>';
-$currency = $user['currency_code'] ? htmlspecialchars($user['currency_code']) : 'USD';
 ?>
 
 <!DOCTYPE html>
@@ -55,6 +49,12 @@ $currency = $user['currency_code'] ? htmlspecialchars($user['currency_code']) : 
 
     <link rel="stylesheet" href="../CSS/profile.css">
     <script type="text/javascript" src="../JS/app.js" defer></script>
+
+    <style>
+            :root {
+                --currency-symbol: "<?php echo $symbol; ?>";
+            }
+        </style>
 
 
 </head>
@@ -172,11 +172,11 @@ $currency = $user['currency_code'] ? htmlspecialchars($user['currency_code']) : 
                 </div>
                 <div class="info-item">
                     <span>Phone</span>
-                    <p><?php echo $phone; ?></p>
+                    <p><?php echo $user['phone_number']; ?></p>
                 </div>
                 <div class="info-item">
                     <span>Currency</span>
-                    <p><?php echo $currency; ?></p>
+                    <p><?php echo $user['currency_code']; ?></p>
                 </div>
             </div>
         </div>

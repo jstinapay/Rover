@@ -6,43 +6,77 @@ if (!isset($_SESSION['rover_id'])) {
     exit();
 }
 
+if(!isset($_GET['trip_id'])) {
+    header("Location: dashboard.php");
+    exit();
+}
+$rover_id = $_SESSION['rover_id'];
+$trip_id = $_GET['trip_id'];
+
 require_once 'connect.php';
 
-$currency_code = $_SESSION['currency_code'];
-
+$currency_code = $_SESSION['currency_code'] ?? 'USD';
 $currency_symbols = [
     'PHP' => '₱',
     'USD' => '$',
     'EUR' => '€',
     'JPY' => '¥',
     'GBP' => '£',
-    'CNY' => '¥',
+    'CNY' => 'CN¥',
 ];
-
-$symbol = $currency_symbols[$currency_code];
+$symbol = $currency_symbols[$currency_code] ?? '$';
 
 $error_message = '';
 
-$trip_id = $_GET['trip_id'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $category_name = $_POST['category_name'];
-    $allocation_amount = $_POST['allocation_amount'];
-    $sql = "INSERT INTO category (trip_id, category_name, allocation_amount) VALUES (?, ?, ?);";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("isd", $trip_id, $category_name, $allocation_amount);
-    if ($stmt->execute()) {
-        $stmt->close();
-        $conn->close();
-        header("Location: view_trip.php?trip_id=" . $trip_id);
-        exit();
+    $allocation_amount = (float) $_POST['allocation_amount'];
+
+    $sql_budget = "SELECT 
+                     t.total_budget,
+                     COALESCE(SUM(c.allocation_amount), 0) AS current_allocated
+                   FROM trip t
+                   LEFT JOIN category c ON t.trip_id = c.trip_id
+                   WHERE t.trip_id = ? AND t.rover_id = ?
+                   GROUP BY t.trip_id";
+
+    $stmt_budget = $conn->prepare($sql_budget);
+    $stmt_budget->bind_param("ii", $trip_id, $rover_id);
+    $stmt_budget->execute();
+    $budget_data = $stmt_budget->get_result()->fetch_assoc();
+    $stmt_budget->close();
+
+    if (!$budget_data) {
+        $error_message = "Error: Trip not found or you do not have permission.";
     } else {
-        $error_message = 'Execute failed: ' . $stmt->error;
-        $stmt->close();
+        $total_budget = (float) $budget_data['total_budget'];
+        $current_allocated = (float) $budget_data['current_allocated'];
+
+        if (($current_allocated + $allocation_amount) > $total_budget) {
+            $remaining_budget = $total_budget - $current_allocated;
+            $error_message = "Allocation exceeds total trip budget. You only have " . $symbol . number_format($remaining_budget, 2) . " left to allocate.";
+        } else {
+            $sql = "INSERT INTO category (trip_id, category_name, allocation_amount) VALUES (?, ?, ?);";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("isd", $trip_id, $category_name, $allocation_amount);
+            
+            if ($stmt->execute()) {
+                $stmt->close();
+                $conn->close();
+                header("Location: view_trip.php?trip_id=" . $trip_id);
+                exit();
+            } else {
+                $error_message = 'Execute failed: ' . $stmt->error;
+                $stmt->close();
+            }
+        }
     }
-}
+    
+} 
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

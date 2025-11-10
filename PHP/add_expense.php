@@ -1,119 +1,128 @@
+<?php
+session_start();
+
+if (!isset($_SESSION['rover_id'])) {
+    header("Location: ../login.html");
+    exit();
+}
+if (!isset($_GET['trip_id'])) {
+    echo "No trip selected.";
+    header("Location: dashboard.php");
+    exit();
+}
+
+$rover_id = $_SESSION['rover_id'];
+$trip_id = $_GET['trip_id'];
+$error_message = "";
+
+$host = "yamanote.proxy.rlwy.net";
+$user = "root";
+$pass = "ussforDJGtKQAqXiQTHUnStcDIwpdTja";
+$dbname = "railway";
+$port = "40768";
+$conn = new mysqli($host, $user, $pass, $dbname, $port);
+if ($conn->connect_error) {
+    die("Connection Failed: " . $conn->connect_error);
+}
+
+$currency_code = isset($_SESSION['currency_code']) ? $_SESSION['currency_code'] : 'USD';
+$currency_symbols = ['PHP' => '₱', 'USD' => '$', 'EUR' => '€', 'JPY' => '¥', 'GBP' => '£', 'CNY' => 'CN¥'];
+$symbol = isset($currency_symbols[$currency_code]) ? $currency_symbols[$currency_code] : '$';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $expense_name = $_POST['expense_name'];
+    $category_id = $_POST['category_id'];
+    $expense_date = $_POST['expense_date'];
+    $expense_amount = (float) $_POST['expense_amount'];
+    $payment_method_id = $_POST['payment_method_id'];
+    $trip_id = $_POST['trip_id'];
+
+    $sql_check = "SELECT t.rover_id FROM category c
+                  JOIN trip t ON c.trip_id = t.trip_id
+                  WHERE c.category_id = ? AND t.rover_id = ?";
+    $stmt_check = $conn->prepare($sql_check);
+    $stmt_check->bind_param("ii", $category_id, $rover_id);
+    $stmt_check->execute();
+    $result_check = $stmt_check->get_result();
+
+    if ($result_check->num_rows == 0) {
+        $error_message = "Security check failed. You do not own this category.";
+    } else {
+        $sql_budget = "SELECT 
+                         c.allocation_amount, 
+                         COALESCE(SUM(e.expense_amount), 0) AS total_spent
+                       FROM category c
+                       LEFT JOIN expense e ON c.category_id = e.category_id
+                       WHERE c.category_id = ?
+                       GROUP BY c.category_id";
+        
+        $stmt_budget = $conn->prepare($sql_budget);
+        $stmt_budget->bind_param("i", $category_id);
+        $stmt_budget->execute();
+        $budget_data = $stmt_budget->get_result()->fetch_assoc();
+        $stmt_budget->close();
+
+        $allocation = (float) $budget_data['allocation_amount'];
+        $total_spent = (float) $budget_data['total_spent'];
+
+        if (($total_spent + $expense_amount) > $allocation) {
+            $remaining_budget = $allocation - $total_spent;
+            $error_message = "Expense exceeds budget. You only have " . $symbol . number_format($remaining_budget, 2) . " left in this category.";
+        } else {
+            $sql_insert = "INSERT INTO expense (trip_id, category_id, payment_method_id, expense_name, expense_amount, expense_date)
+                           VALUES (?, ?, ?, ?, ?, ?)";
+            
+            $stmt_insert = $conn->prepare($sql_insert);
+            $stmt_insert->bind_param("iiisds", $trip_id, $category_id, $payment_method_id, $expense_name, $expense_amount, $expense_date);
+
+            if ($stmt_insert->execute()) {
+                header("Location: view_trip.php?trip_id=" . $trip_id);
+                exit();
+            } else {
+                $error_message = "Error logging expense: " . $stmt_insert->error;
+            }
+            $stmt_insert->close();
+        }
+    }
+    $stmt_check->close();
+}
+
+$sql_cat = "SELECT category_id, category_name FROM category WHERE trip_id = ?";
+$stmt_cat = $conn->prepare($sql_cat);
+$stmt_cat->bind_param("i", $trip_id);
+$stmt_cat->execute();
+$categories = $stmt_cat->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt_cat->close();
+
+$sql_pm = "SELECT payment_method_id, payment_method_name FROM payment_method WHERE rover_id = ?";
+$stmt_pm = $conn->prepare($sql_pm);
+$stmt_pm->bind_param("i", $rover_id);
+$stmt_pm->execute();
+$payment_methods = $stmt_pm->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt_pm->close();
+
+$conn->close();
+?>
+
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Trip</title>
+    <title>Add Expense</title>
     <link rel="stylesheet" href="../CSS/createTrip.css">
-
-    <style>
+    
+ <style>
             :root {
                 --currency-symbol: "<?php echo $symbol; ?>";
             }
         </style>
-
+    
     <script type="text/javascript" src="../JS/app.js" defer></script>
 </head>
-
 <body>
     <nav id="sidebar">
-        <ul>
-
-            <li>
-                <span class="logo">Rover</span>
-                <button onclick=toggleSidebar() id="toggle-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                        fill="#e3e3e3">
-                        <path
-                            d="M440-240 200-480l240-240 56 56-183 184 183 184-56 56Zm264 0L464-480l240-240 56 56-183 184 183 184-56 56Z" />
-                    </svg>
-                </button>
-            </li>
-            <li>
-                <a href="../index.html">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                        fill="#e3e3e3">
-                        <path
-                            d="M240-200h120v-240h240v240h120v-360L480-740 240-560v360Zm-80 80v-480l320-240 320 240v480H520v-240h-80v240H160Zm320-350Z" />
-                    </svg>
-                    <span>Home</span>
-                </a>
-            </li>
-            <li class="active">
-                <a href="dashboard.php">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                        fill="#e3e3e3">
-                        <path
-                            d="M520-600v-240h320v240H520ZM120-440v-400h320v400H120Zm400 320v-400h320v400H520Zm-400 0v-240h320v240H120Zm80-400h160v-240H200v240Zm400 320h160v-240H600v240Zm0-480h160v-80H600v80ZM200-200h160v-80H200v80Zm160-320Zm240-160Zm0 240ZM360-280Z" />
-                    </svg>
-                    <span>Dashboard</span>
-                </a>
-            </li>
-
-            <li>
-                <a href="createTrip.php">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                        fill="#e3e3e3">
-                        <path
-                            d="M280-80v-100l120-84v-144L80-280v-120l320-224v-176q0-33 23.5-56.5T480-880q33 0 56.5 23.5T560-800v176l320 224v120L560-408v144l120 84v100l-200-60-200 60Z" />
-                    </svg>
-                    <span>Create Trip</span>
-                </a>
-            </li>
-            <li>
-                <button onclick="toggleSubMenu(this)" class="dropdown-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                        fill="#e3e3e3">
-                        <path
-                            d="M240-160q-66 0-113-47T80-320v-320q0-66 47-113t113-47h480q66 0 113 47t47 113v320q0 66-47 113t-113 47H240Zm0-480h480q22 0 42 5t38 16v-21q0-33-23.5-56.5T720-720H240q-33 0-56.5 23.5T160-640v21q18-11 38-16t42-5Zm-74 130 445 108q9 2 18 0t17-8l139-116q-11-15-28-24.5t-37-9.5H240q-26 0-45.5 13.5T166-510Z" />
-                    </svg>
-                    <span>Budget</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                        fill="#e3e3e3">
-                        <path d="M480-344 240-584l56-56 184 184 184-184 56 56-240 240Z" />
-                    </svg>
-                </button>
-                <ul class="sub-menu">
-                    <div>
-                        <li><a href="#">Allocate Budget</a></li>
-                        <li><a href="#">Custom Category</a></li>
-                    </div>
-                </ul>
-            <li>
-                <button onclick="toggleSubMenu(this)" class="dropdown-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                        fill="#e3e3e3">
-                        <path
-                            d="M441-120v-86q-53-12-91.5-46T293-348l74-30q15 48 44.5 73t77.5 25q41 0 69.5-18.5T587-356q0-35-22-55.5T463-458q-86-27-118-64.5T313-614q0-65 42-101t86-41v-84h80v84q50 8 82.5 36.5T651-650l-74 32q-12-32-34-48t-60-16q-44 0-67 19.5T393-614q0 33 30 52t104 40q69 20 104.5 63.5T667-358q0 71-42 108t-104 46v84h-80Z" />
-                    </svg>
-                    <span>Expenses</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                        fill="#e3e3e3">
-                        <path d="M480-344 240-584l56-56 184 184 184-184 56 56-240 240Z" />
-                    </svg>
-                </button>
-                <ul class="sub-menu">
-                    <div>
-                        <li><a href="#">Add Expense</a></li>
-                        <li><a href="#">Edit Expense</a></li>
-                        <li><a href="#">Payment Method</a></li>
-                    </div>
-                </ul>
-            </li>
-            <li>
-                <a href="profile.php">
-                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
-                        fill="#e3e3e3">
-                        <path
-                            d="M234-276q51-39 114-61.5T480-360q69 0 132 22.5T726-276q35-41 54.5-93T800-480q0-133-93.5-226.5T480-800q-133 0-226.5 93.5T160-480q0 59 19.5 111t54.5 93Zm246-164q-59 0-99.5-40.5T340-580q0-59 40.5-99.5T480-720q59 0 99.5 40.5T620-580q0 59-40.5 99.5T480-440Zm0 360q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q53 0 100-15.5t86-44.5q-39-29-86-44.5T480-280q-53 0-100 15.5T294-220q39 29 86 44.5T480-160Zm0-360q26 0 43-17t17-43q0-26-17-43t-43-17q-26 0-43 17t-17 43q0 26 17 43t43 17Zm0-60Zm0 360Z" />
-                    </svg>
-                    <span>Profile</span>
-                </a>
-            </li>
-
-        </ul>
-    </nav>
+        </nav>
     <main>
         <section class="createTrip-section">
             <h1>Add Expense</h1>
@@ -123,27 +132,43 @@
                 <div class="error-message"><?php echo htmlspecialchars($error_message); ?></div>
             <?php endif; ?>
 
-            <form action="add_category.php?trip_id=<?php echo htmlspecialchars($trip_id); ?>" method="POST">
+            <form action="add_expense.php?trip_id=<?php echo htmlspecialchars($trip_id); ?>" method="POST">
+                
                 <input type="hidden" name="trip_id" value="<?php echo htmlspecialchars($trip_id); ?>">
 
                 <label for="expense_name">Expense Name</label>
-                <input type="text" id="expense_name" name="expense_name" placeholder="Enter expense name" required>
+                <input type="text" id="expense_name" name="expense_name" placeholder="e.g., Coffee, Train ticket" required>
 
-                <label for="expense_category">Category</label>
-                <input type="text" id="expense_category" name="expense_category" placeholder="Enter expense category" required>
+                <label for="category_id">Category</label>
+                <select id="category_id" name="category_id" required>
+                    <option value="">Select a category...</option>
+                    <?php foreach ($categories as $cat): ?>
+                        <option value="<?php echo $cat['category_id']; ?>">
+                            <?php echo htmlspecialchars($cat['category_name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
 
                 <label for="expense_date">Date</label>
-                <div class="input-wrapper">
-                    <input type="date" min="0" step=".01" id="expense_date" name="expense_date" placeholder="Enter expense date" required>
-                </div>
+                <input type="date" id="expense_date" name="expense_date" value="<?php echo date('Y-m-d'); ?>" required>
 
                 <label for="expense_amount">Amount</label>
                 <div class="input-wrapper">
-                    <input type="number" min="0" step=".01" id="expense_amount" name="expense_amount" placeholder="Enter expense amount" required>
+                    <input type="number" min="0" step=".01" id="expense_amount" name="expense_amount" placeholder="0.00" required>
                 </div>
 
-                <label for="payment_method">Payment Method</label>
-                <input type="text" id="payment_method" name="payment_method" placeholder="Enter payment method">
+                <label for="payment_method_id">Payment Method</label>
+                <select id="payment_method_id" name="payment_method_id" required>
+                    <option value="">Select a payment method...</option>
+                    <?php foreach ($payment_methods as $pm): ?>
+                        <option value="<?php echo $pm['payment_method_id']; ?>">
+                            <?php echo htmlspecialchars($pm['payment_method_name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                    <?php if (empty($payment_methods)): ?>
+                        <option value="" disabled>No payment methods found. Add one in your Profile.</option>
+                    <?php endif; ?>
+                </select>
 
                 <button type="submit" class="submit-btn">Log Expense</button>
                 <a href="view_trip.php?trip_id=<?php echo htmlspecialchars($trip_id); ?>" class="cancel-link">Cancel</a>
@@ -151,5 +176,4 @@
         </section>
     </main>
 </body>
-
 </html>

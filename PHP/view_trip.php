@@ -160,9 +160,6 @@ $conn->close();
         Total: <?php echo $symbol; ?><?php echo number_format($trip['total_budget'], 2); ?>
     </h2>
     </section>
-    <?php if ($total_allocated > $trip['total_budget']): ?>
-        <h3 style="color: #e8a8a8;">Warning: Your allocations exceed your total budget!</h3>
-    <?php endif; ?>
 
     <div class="chart_container">
         <div class="chart">
@@ -253,7 +250,8 @@ $conn->close();
     <div class="expenses-header">
         <h2>Expenses</h2>
         <div class="add-expense-button">
-            <a href="add_expense.php">+ Add Expense</a>
+            <a href="add_expense.php?trip_id=<?php echo $trip_id; ?>">+ Add Expense</a>
+
         </div>
     </div>
     

@@ -24,7 +24,7 @@ $currency_symbols = [
     'EUR' => '€',
     'JPY' => '¥',
     'GBP' => '£',
-    'CNY' => '¥',
+    'CNY' => 'CN¥',
 ];
 
 $symbol = isset($currency_symbols[$currency_code]) ? $currency_symbols[$currency_code] : '$';
@@ -32,52 +32,80 @@ $symbol = isset($currency_symbols[$currency_code]) ? $currency_symbols[$currency
 $error_message = "";
 $category = [];
 
-   $sql_get = "SELECT c.category_name, c.allocation_amount, t.trip_id
+$sql_get = "SELECT c.category_name, c.allocation_amount, t.trip_id
             FROM category c JOIN trip t ON c.trip_id = t.trip_id 
             WHERE t.rover_id = ?
             AND c.category_id = ?;";
-    $stmt_get = $conn->prepare($sql_get);
-    $stmt_get->bind_param("ii", $rover_id, $category_id);
-    $stmt_get->execute();
-    $result = $stmt_get->get_result();
+$stmt_get = $conn->prepare($sql_get);
+$stmt_get->bind_param("ii", $rover_id, $category_id);
+$stmt_get->execute();
+$result = $stmt_get->get_result();
 
-    if ($result->num_rows == 0) {
-        echo "Error: Category not found or you do not have permission";
-        $stmt_get->close();
-        $conn->close();
-        exit();
-    }
-    $category = $result->fetch_assoc();
+if ($result->num_rows == 0) {
+    echo "Error: Category not found or you do not have permission";
     $stmt_get->close();
+    $conn->close();
+    exit();
+}
+$category = $result->fetch_assoc();
+$stmt_get->close();
+$trip_id = $category['trip_id'];
 
 
-
-if ($_SERVER['REQUEST_METHOD'] == 'POST'){
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $category_name = $_POST['category_name'];
-    $allocation_amount = $_POST['allocation_amount'];
+    $new_allocation_amount = (float) $_POST['allocation_amount'];
+    $old_allocation_amount = (float) $category['allocation_amount'];
 
-    $sql_update = "UPDATE category c
-            JOIN trip t ON c.trip_id = t.trip_id
-            SET 
-            c.category_name = ?,
-            c.allocation_amount = ?
-            WHERE t.rover_id = ?
-            AND c.category_id = ?;";
-    $stmt = $conn->prepare($sql_update);
-    $stmt->bind_param("sdii", $category_name, $allocation_amount, $rover_id, $category_id);
+    $sql_budget = "SELECT 
+                     t.total_budget,
+                     COALESCE(SUM(c.allocation_amount), 0) AS current_allocated
+                   FROM trip t
+                   LEFT JOIN category c ON t.trip_id = c.trip_id
+                   WHERE t.trip_id = ? AND t.rover_id = ?
+                   GROUP BY t.trip_id";
 
-    if ($stmt->execute()) {
-        header("Location: view_trip.php?trip_id=" . $category['trip_id']);
-        exit();
+    $stmt_budget = $conn->prepare($sql_budget);
+    $stmt_budget->bind_param("ii", $trip_id, $rover_id);
+    $stmt_budget->execute();
+    $budget_data = $stmt_budget->get_result()->fetch_assoc();
+    $stmt_budget->close();
+
+    if (!$budget_data) {
+        $error_message = "Error: Trip not found or you do not have permission.";
     } else {
-        $error_message = "Update Failed: " . $stmt->error;
-    }
-    $stmt->close();    
+        $total_budget = (float) $budget_data['total_budget'];
+        $current_allocated = (float) $budget_data['current_allocated'];
 
+        $new_total_allocated = ($current_allocated - $old_allocation_amount) + $new_allocation_amount;
+
+        if ($new_total_allocated > $total_budget) {
+            $remaining_budget = $total_budget - ($current_allocated - $old_allocation_amount);
+            $error_message = "Allocation exceeds total trip budget. You only have " . $symbol . number_format($remaining_budget, 2) . " left to allocate.";
+        } else {
+            $sql_update = "UPDATE category c
+                           JOIN trip t ON c.trip_id = t.trip_id
+                           SET 
+                           c.category_name = ?,
+                           c.allocation_amount = ?
+                           WHERE t.rover_id = ?
+                           AND c.category_id = ?;";
+            $stmt = $conn->prepare($sql_update);
+            $stmt->bind_param("sdii", $category_name, $new_allocation_amount, $rover_id, $category_id);
+
+            if ($stmt->execute()) {
+                header("Location: view_trip.php?trip_id=" . $trip_id);
+                exit();
+            } else {
+                $error_message = "Update Failed: " . $stmt->error;
+            }
+            $stmt->close();    
+        }
+    }
 } 
 $conn->close();
-
 ?>
+
 
 <!DOCTYPE html>
     <html lang="en">
