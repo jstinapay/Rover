@@ -16,7 +16,7 @@ require_once 'connect.php';
 $rover_id = $_SESSION['rover_id'];
 $trip_id = $_GET['trip_id'];
 
-// ON DELETE CASCADE: budget_category and expenses will also be deleted 
+// ON DELETE CASCADE: budget_category and expenses will also be deleted
 $sql = "DELETE FROM trip WHERE trip_id = ? AND rover_id = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("ii", $trip_id, $rover_id);

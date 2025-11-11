@@ -175,10 +175,17 @@ main p {
 
 .category-container {
     display: grid;
-    /* This creates a responsive grid of cards */
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px;
     margin-top: 2em;
+
+
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 20px;
+    padding-right: 20px;
+    box-sizing: border-box;
 }
 
 .category-card, .category-card-add {
@@ -378,9 +385,7 @@ main p {
     transition: background-color 0.2s ease;
 }
 
-.expenses-table tbody tr:hover {
-    background: rgba(255, 255, 255, 0.08);
-}
+
 
 .expenses-table tbody tr:last-child {
     border-bottom: none;

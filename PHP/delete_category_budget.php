@@ -5,14 +5,13 @@ if (!isset($_SESSION['rover_id'])) {
     header("Location: ../login.html");
     exit();
 }
-if (!isset($_GET['trip_id'])) {
-    echo "No trip selected.";
+if (!isset($_GET['id'])) {
     header("Location: dashboard.php");
     exit();
 }
 
 $rover_id = $_SESSION['rover_id'];
-$trip_id = $_GET['trip_id'];
+$expense_id = $_GET['id'];
 $error_message = "";
 
 require_once 'connect.php';
@@ -25,8 +24,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $expense_name = $_POST['expense_name'];
     $category_budget_id = $_POST['category_budget_id'];
     $expense_date = $_POST['expense_date'];
-    $expense_amount = (float)$_POST['expense_amount'];
+    $new_expense_amount = (float)$_POST['expense_amount'];
     $payment_method_id = $_POST['payment_method_id'];
+
+    $old_expense_amount = (float)$_POST['old_expense_amount'];
+    $trip_id = $_POST['trip_id'];
 
     $sql_budget = "SELECT allocated_budget, 
                           COALESCE(SUM(e.expense_amount), 0) AS total_spent
@@ -44,25 +46,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $allocation = (float) $budget_data['allocated_budget'];
     $total_spent = (float) $budget_data['total_spent'];
 
-    if (($total_spent + $expense_amount) > $allocation) {
-        $remaining_budget = $allocation - $total_spent;
+    $new_total_spent = ($total_spent - $old_expense_amount) + $new_expense_amount;
+
+    if ($new_total_spent > $allocation) {
+        $remaining_budget = $allocation - ($total_spent - $old_expense_amount);
         $error_message = "Expense exceeds budget. You only have " . $symbol . number_format($remaining_budget, 2) . " left in this category.";
     } else {
-        $sql_insert = "INSERT INTO expense (category_budget_id, payment_method_id, expense_name, expense_amount, expense_date)
-                       VALUES (?, ?, ?, ?, ?)";
+        $sql_update = "UPDATE expense SET
+                           category_budget_id = ?,
+                           payment_method_id = ?,
+                           expense_name = ?,
+                           expense_amount = ?,
+                           expense_date = ?
+                       WHERE expense_id = ?";
 
-        $stmt_insert = $conn->prepare($sql_insert);
-        $stmt_insert->bind_param("iisds", $category_budget_id, $payment_method_id, $expense_name, $expense_amount, $expense_date);
+        $stmt_update = $conn->prepare($sql_update);
+        $stmt_update->bind_param("iisdsi", $category_budget_id, $payment_method_id, $expense_name, $new_expense_amount, $expense_date, $expense_id);
 
-        if ($stmt_insert->execute()) {
+        if ($stmt_update->execute()) {
             header("Location: view_trip.php?trip_id=" . $trip_id);
             exit();
         } else {
-            $error_message = "Error logging expense: " . $stmt_insert->error;
+            $error_message = "Error logging expense: " . $stmt_update->error;
         }
-        $stmt_insert->close();
+        $stmt_update->close();
     }
 }
+
+$sql_exp = "SELECT 
+                e.expense_name, e.expense_amount, e.expense_date, 
+                e.payment_method_id, e.category_budget_id,
+                cb.trip_id
+            FROM expense e
+            JOIN category_budget cb ON e.category_budget_id = cb.category_budget_id
+            JOIN trip t ON cb.trip_id = t.trip_id
+            WHERE e.expense_id = ? AND t.rover_id = ?";
+$stmt_exp = $conn->prepare($sql_exp);
+$stmt_exp->bind_param("ii", $expense_id, $rover_id);
+$stmt_exp->execute();
+$expense = $stmt_exp->get_result()->fetch_assoc();
+$stmt_exp->close();
+
+if (!$expense) {
+    echo "Expense not found or you do not have permission.";
+    $conn->close();
+    exit();
+}
+
+$trip_id = $expense['trip_id'];
 
 $sql_cat = "SELECT cb.category_budget_id, c.category_name
             FROM category_budget cb
@@ -86,12 +117,23 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Expense</title>
+    <title>Edit Expense</title>
     <link rel="stylesheet" href="../CSS/createTrip.css">
     <style>
-        :root {
-            --currency-symbol: "<?php echo $symbol; ?>";
+        select {
+            width: 100%; padding: 0.8em; font-size: 1.1em;
+            border-radius: 0.5em; border: 1px solid var(--line-clr);
+            background-color: #2b2e40; color: var(--text-clr);
+            margin-bottom: 1.2em; font-family: 'Poppins', sans-serif;
         }
+        .input-wrapper { position: relative; }
+        .input-wrapper::before {
+            content: "<?php echo $symbol; ?>";
+            position: absolute; left: 15px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary-text-clr); font-size: 1.1em;
+        }
+        .input-wrapper input { padding-left: 35px; }
     </style>
     <script type="text/javascript" src="../JS/app.js" defer></script>
 </head>
@@ -135,50 +177,55 @@ $conn->close();
 </nav>
 <main>
     <section class="createTrip-section">
-        <h1>Add Expense</h1>
-        <p>Log an expense for this trip.</p>
+        <h1>Edit Expense</h1>
+        <p>Update your logged expense.</p>
 
         <?php if (!empty($error_message)): ?>
             <div class="error-message"><?php echo htmlspecialchars($error_message); ?></div>
         <?php endif; ?>
 
-        <form action="add_expense.php?trip_id=<?php echo htmlspecialchars($trip_id); ?>" method="POST">
+        <form action="edit_expense.php?id=<?php echo htmlspecialchars($expense_id); ?>" method="POST">
+
+            <input type="hidden" name="trip_id" value="<?php echo $trip_id; ?>">
+            <input type="hidden" name="old_expense_amount" value="<?php echo $expense['expense_amount']; ?>">
 
             <label for="expense_name">Expense Name</label>
-            <input type="text" id="expense_name" name="expense_name" placeholder="e.g., Coffee, Train ticket" required>
+            <input type="text" id="expense_name" name="expense_name"
+                   value="<?php echo htmlspecialchars($expense['expense_name']); ?>" required>
 
             <label for="category_budget_id">Category</label>
             <select id="category_budget_id" name="category_budget_id" required>
                 <option value="">Select a category...</option>
                 <?php foreach ($categories as $cat): ?>
-                    <option value="<?php echo $cat['category_budget_id']; ?>">
+                    <option value="<?php echo $cat['category_budget_id']; ?>"
+                        <?php if ($cat['category_budget_id'] == $expense['category_budget_id']) echo 'selected'; ?>>
                         <?php echo htmlspecialchars($cat['category_name']); ?>
                     </option>
                 <?php endforeach; ?>
             </select>
 
             <label for="expense_date">Date</label>
-            <input type="date" id="expense_date" name="expense_date" value="<?php echo date('Y-m-d'); ?>" required>
+            <input type="date" id="expense_date" name="expense_date"
+                   value="<?php echo htmlspecialchars($expense['expense_date']); ?>" required>
 
             <label for="expense_amount">Amount</label>
             <div class="input-wrapper">
-                <input type="number" min="0" step=".01" id="expense_amount" name="expense_amount" placeholder="0.00" required>
+                <input type="number" min="0" step=".01" id="expense_amount" name="expense_amount"
+                       value="<?php echo htmlspecialchars($expense['expense_amount']); ?>" required>
             </div>
 
             <label for="payment_method_id">Payment Method</label>
             <select id="payment_method_id" name="payment_method_id" required>
                 <option value="">Select a payment method...</option>
                 <?php foreach ($payment_methods as $pm): ?>
-                    <option value="<?php echo $pm['payment_method_id']; ?>">
+                    <option value="<?php echo $pm['payment_method_id']; ?>"
+                        <?php if ($pm['payment_method_id'] == $expense['payment_method_id']) echo 'selected'; ?>>
                         <?php echo htmlspecialchars($pm['payment_method_name']); ?>
                     </option>
                 <?php endforeach; ?>
-                <?php if (empty($payment_methods)): ?>
-                    <option value="" disabled>No payment methods found.</option>
-                <?php endif; ?>
             </select>
 
-            <button type="submit" class="submit-btn">Log Expense</button>
+            <button type="submit" class="submit-btn">Save Changes</button>
             <a href="view_trip.php?trip_id=<?php echo htmlspecialchars($trip_id); ?>" class="cancel-link">Cancel</a>
         </form>
     </section>

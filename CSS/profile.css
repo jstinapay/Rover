@@ -352,3 +352,28 @@ h1 {
 .btn-delete:hover {
   background: #c74c4c;
 }
+
+
+ .btn-logout {
+     text-decoration: none;
+     padding: 10px 18px;
+     border-radius: 8px;
+     font-weight: 600;
+     font-size: 0.95rem;
+     transition: background 0.2s ease;
+     background: #a43a3a;
+     color: var(--text-clr);
+     text-align: center;
+     display: inline-block;
+     margin-top: 10px;
+ }
+.btn-logout:hover {
+    background: #c04545;
+}
+
+.profile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
