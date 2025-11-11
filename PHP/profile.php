@@ -181,7 +181,7 @@ $conn->close();
             </div>
         </div>
         <div class="profile-actions">
-            <a href="edit_profile.php" class="btn-edit">Edit Profile</a>
+            <a href="edit_rover.php" class="btn-edit">Edit Profile</a>
         </div>
     </div>
 

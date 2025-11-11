@@ -96,31 +96,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <option value="Bank Transfer">Bank Transfer</option>
                     <option value="PayPal">PayPal</option>
                     <option value="Gcash">Gcash</option>
-                    <option value="Custom">Custom...</option>
-                </select>
-                
-                <div id="custom-name-wrapper">
-                    <label for="custom_payment_name">Custom Name</label>
-                    <input type="text" id="custom_payment_name" name="custom_payment_name" 
-                           placeholder="e.g., My BPI Visa Card">
-                </div>
-                       
+                </select>                    
                 <button type="submit" class="submit-btn" style="margin-top: 15px;">Add Method</button>
                 <a href="profile.php" class="cancel-link">Cancel</a>
             </form>
         </section>
     </main>
-
-    <script>
-        function toggleCustomInput() {
-            var select = document.getElementById('payment_option');
-            var customInput = document.getElementById('custom-name-wrapper');
-            if (select.value === 'Custom') {
-                customInput.style.display = 'block';
-            } else {
-                customInput.style.display = 'none';
-            }
-        }
-    </script>
 </body>
 </html>
