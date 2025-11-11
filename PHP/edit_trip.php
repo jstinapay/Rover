@@ -30,12 +30,12 @@ $symbol = isset($currency_symbols[$currency_code]) ? $currency_symbols[$currency
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $trip_name = $_POST['trip_name'];
-    $region = $_POST['region'];
-    $country = $_POST['country'];
-    $city = $_POST['city'];
+    $continent_name = $_POST['region'];
+    $country_name = $_POST['country'];
+    $city_name = $_POST['city'];
     $start_date = $_POST['start_date'];
     $end_date = $_POST['end_date'];
-    $total_budget = $_POST['total_budget'];
+    $trip_budget = $_POST['trip_budget'];
     $destination_id = $_POST['destination_id'];
 
     $sql_dest = "UPDATE destination 

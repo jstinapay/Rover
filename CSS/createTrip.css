@@ -248,3 +248,21 @@ input:focus, select:focus {
 .cancel-link:hover{
     color: red;
 }
+
+
+select {
+    width: 100%;
+    padding: 0.8em;
+    font-size: 1.1em;
+    border-radius: 0.5em;
+    border: 1px solid var(--line-clr);
+    background-color: #2b2e40;
+    color: var(--text-clr);
+    margin-bottom: 1.2em;
+    font-family: 'Poppins', sans-serif;
+}
+select:disabled {
+    background-color: #222533;
+    color: var(--secondary-text-clr);
+    cursor: not-allowed;
+}

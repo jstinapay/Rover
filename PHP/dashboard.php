@@ -27,14 +27,16 @@ $sql = "SELECT
             t.trip_name,
             t.start_date,
             t.end_date,
-            t.total_budget,
+            t.trip_budget,
             t.status,
-            d.country,
-            d.city
+            ci.city_name,
+            co.country_name
             FROM
                 trip t
-            INNER JOIN
-                    destination d ON t.destination_id = d.destination_id
+            JOIN
+                city ci ON t.city_id = ci.city_id
+            JOIN 
+                country co ON ci.country_id = co.country_id        
             WHERE 
                 t.rover_id = ?
             ORDER BY 
@@ -143,11 +145,11 @@ $conn->close();
                 <span class="trip_status"><?php echo ucfirst(htmlspecialchars($trip['status']))?></span>
             </div>
             <div class="trip_details">
-                <p><strong>Destination: </strong><?php echo htmlspecialchars($trip['city']) . ', ' . htmlspecialchars($trip['country']);?></p>
+                <p><strong>Destination: </strong><?php echo htmlspecialchars($trip['city_name']) . ', ' . htmlspecialchars($trip['country_name']);?></p>
                 <p><strong>Start Date:</strong> <?php echo date('M d, Y', strtotime($trip['start_date'])); ?></p>
                 <p><strong>End Date:</strong> <?php echo date('M d, Y', strtotime($trip['end_date'])); ?></p>
-                <?php if (isset($trip['total_budget'])): ?>
-                    <p><strong>Budget:</strong> <?php echo $symbol; ?><?php echo number_format($trip['total_budget'], 2) ?> </p>
+                <?php if (isset($trip['trip_budget'])): ?>
+                    <p><strong>Budget:</strong> <?php echo $symbol; ?><?php echo number_format($trip['trip_budget'], 2) ?> </p>
                 <?php endif; ?>
             </div>
             <div class="trip_actions">
