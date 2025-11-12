@@ -139,6 +139,10 @@ $conn->close();
 <main>
     <section class='dashboard'>
         <h1><?php echo htmlspecialchars($trip['trip_name']); ?></h1>
+        <a href="reports.php?trip_id=<?php echo $trip_id; ?>" class="btn-report-icon" title="View Reports">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M280-280h80v-200h-80v200Zm320 0h80v-400h-80v400Zm-160 0h80v-120h-80v120Zm0-200h80v-80h-80v80ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>
+            
+        </a>
         <h2>
             Allocated Budget: <?php echo $symbol; ?><?php echo number_format($total_allocated, 2); ?> /
             Total: <?php echo $symbol; ?><?php echo number_format($trip['trip_budget'], 2); ?>
@@ -149,6 +153,7 @@ $conn->close();
         <div class="chart">
             <canvas id="myChart"></canvas>
         </div>
+        
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -196,8 +201,8 @@ $conn->close();
                 <p>Budget: <?php echo $symbol; ?><?php echo number_format($budget['allocated_budget'], 2); ?></p>
 
                 <div class="category_actions">
-                    <a href="edit_category_budget.php?id=<?php echo $budget['category_budget_id']; ?>" class="edit-button">Edit</a>
-                    <a href="delete_category_budget.php?id=<?php echo $budget['category_budget_id']; ?>&trip_id=<?php echo $trip['trip_id']; ?>" class="delete-button" onclick="return confirm('Are you sure you want to delete this budget? This action cannot be undone.');">Delete</a>
+                    <a href="edit_category_budget.php?category_budget_id=<?php echo $budget['category_budget_id']; ?>" class="edit-button">Edit</a>
+                    <a href="delete_category_budget.php?category_budget_id=<?php echo $budget['category_budget_id']; ?>&trip_id=<?php echo $trip['trip_id']; ?>" class="delete-button" onclick="return confirm('Are you sure you want to delete this budget? This action cannot be undone.');">Delete</a>
                 </div>
             </div>
         <?php endforeach; ?>

@@ -6,14 +6,15 @@ if (!isset($_SESSION['rover_id'])) {
     exit();
 }
 
-if (!isset($_GET['id'])) {
+if (!isset($_GET['category_budget_id'])) {
     header("Location: dashboard.php");
     exit();
 }
 
 require_once 'connect.php';
+
 $rover_id = $_SESSION['rover_id'];
-$category_budget_id = $_GET['id'];
+$category_budget_id = $_GET['category_budget_id'];
 
 $currency_code = isset($_SESSION['currency_code']) ? $_SESSION['currency_code'] : 'USD';
 $currency_symbols = ['PHP' => '₱', 'USD' => '$', 'EUR' => '€', 'JPY' => '¥', 'GBP' => '£', 'CNY' => '¥'];
