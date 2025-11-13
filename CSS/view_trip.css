@@ -175,7 +175,7 @@ main p {
     font-size: 1rem;
     color: var(--secondary-text-clr);
   }
-  .btn-report-icon {
+  .edit-btn-icon, .finish-btn-icon {
     margin-left: 1em;
     display: inline-flex;
     align-items: center;
@@ -187,9 +187,12 @@ main p {
     color: var(--text-clr);
     transition: 200ms ease;
   }
-    .btn-report-icon:hover {
-        background-color: var(--button-hover-clr);
-    }
+  .edit-btn-icon:hover  {
+    background-color: #ffb300;
+  }
+  .finish-btn-icon:hover {
+    background-color: #28a745;
+  }
 }
 
 .category-container {
@@ -488,4 +491,78 @@ main p {
     font-size: 12px;
     margin-right: 4px;
   }
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  color: var(--accent-clr);
+  text-decoration: none;
+  font-weight: 500;
+}
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.budget-h1 {
+  display: flex;
+  justify-content: space-between;
+  color: var(--accent-clr);
+  padding: 0 20px;
+  
+}
+
+.budget-tracker {
+  margin-top: 1em;
+  margin-left: auto;
+  margin-right: auto;
+  background: var(--hover-clr);
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 800px;
+  margin-bottom: 25px;
+}
+
+.budget-header,
+.budget-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--secondary-text-clr);
+}
+
+.budget-footer {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-top: 10px;
+}
+
+.budget-footer .spent-total {
+  color: var(--text-clr);
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 12px;
+  background: var(--base-clr);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.progress-bar-spent {
+  height: 100%;
+  background: var(--accent-clr);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+}
+
+.progress-bar-spent.danger {
+  background: #a43a3a;
+}
+
+.danger-text {
+  color: #a43a3a !important;
+  font-weight: 600;
 }

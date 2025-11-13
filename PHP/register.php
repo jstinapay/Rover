@@ -25,6 +25,18 @@ if ($result->num_rows > 0) {
     exit();
 }
 
+//check if phone number is already registered, if yes dont duplicate
+$sql = "SELECT * FROM rover WHERE phone_number = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $phone_number);
+$stmt->execute();
+$result = $stmt->get_result();
+if ($result->num_rows > 0) {
+    echo "<script>alert('Phone number already registered');</script>";
+    echo "<script>window.location.href = '../register.html';</script>";
+    exit();
+}
+
 //prepare and execute SQL
 $sql = "INSERT INTO rover (first_name, last_name, phone_number, currency_code, email, password) 
         VALUES (?, ?, ?, ?, ?, ?)";

@@ -51,7 +51,7 @@ if ($stmt->execute()) {
 
     $_SESSION['final_summary'] = $final_summary;
 
-    header("Location: view_trip.php?trip_id=" . $trip_id . "&status=completed");
+    header("Location: dashboard.php?trip_id=" . $trip_id . "&status=completed");
     exit();
 } else {
     echo "Error finishing trip: " . $stmt->error;

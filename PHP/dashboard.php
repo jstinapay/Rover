@@ -128,7 +128,8 @@ $conn->close();
             </div>
             <div class="trip_actions">
                 <?php if ($trip['status'] === 'completed'): ?>
-                    <a href="trip_summary.php?trip_id=<?php echo $trip['trip_id']; ?>" class="btn_summary">View Summary</a>
+                    <a href="trip_summary.php?trip_id=<?php echo $trip['trip_id']; ?>" class="btn_view">View Summary</a>
+                    <a href="delete_trip.php?trip_id=<?php echo $trip['trip_id']; ?>" class="btn_delete" onclick="return confirm('Are you sure you want to delete this trip? This action cannot be undone.');">Delete</a>
                 <?php else: ?>
                     <a href="view_trip.php?trip_id=<?php echo $trip['trip_id']; ?>" class="btn_view">View</a>
                     <a href="edit_trip.php?trip_id=<?php echo $trip['trip_id']; ?>" class="btn_edit">Edit</a>
