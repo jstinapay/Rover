@@ -7,6 +7,11 @@ if (!isset($_SESSION['rover_id'])) {
 }
 
 if (!isset($_GET['category_budget_id'])) {
+    header("Location: dashboard.php"); 
+    exit();
+}
+
+if(!isset($_GET['trip_id'])) {
     header("Location: dashboard.php");
     exit();
 }
@@ -15,6 +20,7 @@ require_once 'connect.php';
 
 $rover_id = $_SESSION['rover_id'];
 $category_budget_id = $_GET['category_budget_id'];
+$trip_id_get = $_GET['trip_id']; // Use for loading
 
 $currency_code = isset($_SESSION['currency_code']) ? $_SESSION['currency_code'] : 'USD';
 $currency_symbols = ['PHP' => '₱', 'USD' => '$', 'EUR' => '€', 'JPY' => '¥', 'GBP' => '£', 'CNY' => '¥'];
@@ -23,20 +29,22 @@ $symbol = isset($currency_symbols[$currency_code]) ? $currency_symbols[$currency
 $error_message = "";
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // --- POST LOGIC ---
     $new_allocated_budget = (float)$_POST['allocated_budget'];
-    $trip_id = $_POST['trip_id'];
     $old_allocated_budget = (float)$_POST['old_allocated_budget'];
+    $trip_id_post = (int)$_POST['trip_id']; // From hidden field
 
+    // 1. Get trip budget
     $sql_budget = "SELECT 
                      t.trip_budget,
                      COALESCE(SUM(cb.allocated_budget), 0) AS current_allocated
                    FROM trip t
                    LEFT JOIN category_budget cb ON t.trip_id = cb.trip_id
                    WHERE t.trip_id = ? AND t.rover_id = ?
-                   GROUP BY t.trip_id";
-
+                   GROUP BY t.trip_id, t.trip_budget";
+                   
     $stmt_budget = $conn->prepare($sql_budget);
-    $stmt_budget->bind_param("ii", $trip_id, $rover_id);
+    $stmt_budget->bind_param("ii", $trip_id_post, $rover_id);
     $stmt_budget->execute();
     $budget_data = $stmt_budget->get_result()->fetch_assoc();
     $stmt_budget->close();
@@ -52,45 +60,53 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($new_total_allocated > $total_budget) {
             $remaining_budget = $total_budget - ($current_allocated - $old_allocated_budget);
             $error_message = "Allocation exceeds total trip budget. You only have " . $symbol . number_format($remaining_budget, 2) . " left to allocate.";
+            
         } else {
             $sql_update = "UPDATE category_budget SET allocated_budget = ? 
-                           WHERE category_budget_id = ?";
-            $stmt = $conn->prepare($sql_update);
-            $stmt->bind_param("di", $new_allocated_budget, $category_budget_id);
+                           WHERE category_budget_id = ? AND trip_id = ?";
+            $stmt_update = $conn->prepare($sql_update);
+            $stmt_update->bind_param("dii", $new_allocated_budget, $category_budget_id, $trip_id_post);
 
-            if ($stmt->execute()) {
-                header("Location: view_trip.php?trip_id=" . $trip_id);
+            if ($stmt_update->execute()) {
+                header("Location: view_trip.php?trip_id=" . $trip_id_post);
                 exit();
             } else {
-                $error_message = "Update Failed: " . $stmt->error;
+                $error_message = "Update Failed: " . $stmt_update->error;
             }
-            $stmt->close();
+            $stmt_update->close();
         }
     }
 }
 
 $sql_get = "SELECT 
-                cb.allocated_budget, cb.trip_id,
+                cb.allocated_budget, 
+                cb.trip_id,
                 c.category_name
-            FROM category_budget cb
-            JOIN category c ON cb.category_id = c.category_id
-            JOIN trip t ON cb.trip_id = t.trip_id
-            WHERE cb.category_budget_id = ? AND t.rover_id = ?";
+            FROM 
+                category_budget cb
+            JOIN 
+                category c ON cb.category_id = c.category_id
+            JOIN
+                trip t ON cb.trip_id = t.trip_id
+            WHERE 
+                cb.category_budget_id = ? AND t.rover_id = ?";
 
 $stmt_get = $conn->prepare($sql_get);
 $stmt_get->bind_param("ii", $category_budget_id, $rover_id);
 $stmt_get->execute();
-$budget = $stmt_get->get_result()->fetch_assoc();
-$stmt_get->close();
+$result = $stmt_get->get_result();
 
-if (!$budget) {
-    echo "Budget not found or you do not have permission.";
+if ($result->num_rows == 0) {
+    echo "Error: Category not found or you do not have permission";
+    $stmt_get->close();
     $conn->close();
     exit();
 }
-
+$budget = $result->fetch_assoc(); 
+$stmt_get->close();
 $conn->close();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -172,7 +188,7 @@ $conn->close();
             <div class="error-message"><?php echo htmlspecialchars($error_message); ?></div>
         <?php endif; ?>
 
-        <form action="edit_category_budget.php?id=<?php echo $category_budget_id; ?>" method="POST">
+        <form action="edit_category_budget.php?category_budget_id=<?php echo $category_budget_id; ?>&trip_id=<?php echo $trip['trip_id']; ?>" method="POST">
 
             <input type="hidden" name="trip_id" value="<?php echo $budget['trip_id']; ?>">
             <input type="hidden" name="old_allocated_budget" value="<?php echo $budget['allocated_budget']; ?>">

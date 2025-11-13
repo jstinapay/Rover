@@ -120,7 +120,7 @@ $conn->close();
                    value="<?php echo htmlspecialchars($rover['last_name']); ?>" required>
 
             <label for="phone_number">Phone Number</label>
-            <input type="tel" id="phone_number" name="phone_number"
+            <input type="number" id="phone_number" name="phone_number"
                    value="<?php echo htmlspecialchars($rover['phone_number']); ?>" required>
 
             <label for="email">Email</label>

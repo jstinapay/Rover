@@ -1,4 +1,6 @@
 <?php
+ini_set('DISPLAY_ERRORS', 1);
+error_reporting(E_ALL);
 session_start();
 
 if (!isset($_SESSION['rover_id'])) {
@@ -7,13 +9,13 @@ if (!isset($_SESSION['rover_id'])) {
 }
 
 if (!isset($_GET['trip_id'])) {
-    echo "<script>alert('No trip selected.')</script>";
-    echo "<script>window.location.href = 'dashboard.php';</script>";
+    header('Location: dashboard.php');
     exit();
 }
 
 $trip_id = $_GET['trip_id'];
 $rover_id = $_SESSION['rover_id'];
+
 
 require_once 'connect.php';
 
@@ -201,7 +203,8 @@ $conn->close();
                 <p>Budget: <?php echo $symbol; ?><?php echo number_format($budget['allocated_budget'], 2); ?></p>
 
                 <div class="category_actions">
-                    <a href="edit_category_budget.php?category_budget_id=<?php echo $budget['category_budget_id']; ?>" class="edit-button">Edit</a>
+                    <a href="view_category_budget.php?category_budget_id=<?php echo $budget['category_budget_id']; ?>&trip_id=<?php echo $trip['trip_id']; ?>" class="view-button">View</a>
+                    <a href="edit_category_budget.php?category_budget_id=<?php echo $budget['category_budget_id']; ?>&trip_id=<?php echo $trip['trip_id'] ?>" class="edit-button">Edit</a>
                     <a href="delete_category_budget.php?category_budget_id=<?php echo $budget['category_budget_id']; ?>&trip_id=<?php echo $trip['trip_id']; ?>" class="delete-button" onclick="return confirm('Are you sure you want to delete this budget? This action cannot be undone.');">Delete</a>
                 </div>
             </div>
