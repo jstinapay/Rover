@@ -117,7 +117,7 @@ $conn->close();
 </nav>
 <main>
     <section class="createTrip-section">
-        <h2>Add Payment Method</h2>
+        <h1>Add Payment Method</h1>
         <p>Add a new payment method to track expenses.</p>
 
         <?php if (!empty($message)): ?>
