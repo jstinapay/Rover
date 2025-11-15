@@ -26,6 +26,11 @@ $stmt_user->bind_param("i", $rover_id);
 $stmt_user->execute();
 $user = $stmt_user->get_result()->fetch_assoc();
 $stmt_user->close();
+
+$failed_delete_id = null;
+if (isset($_GET['error']) && $_GET['error'] === 'in_use' && isset($_GET['failed_id'])) {
+    $failed_delete_id = (int)$_GET['failed_id'];
+}
 $conn->close();
 
 
@@ -109,6 +114,17 @@ $currency = $user['currency_code'] ? htmlspecialchars($user['currency_code']) : 
         </div>
     </div>
 
+    <?php
+    $error_message = "";
+    if (isset($_GET['error']) && $_GET['error'] === 'in_use') {
+        $error_message = "Cannot delete: This payment method is already linked to one or more expenses.";
+    }
+    ?>
+
+
+
+
+
     <div class="payment-methods-panel">
         <div class="payment-header">
             <h2>Payment Methods</h2>
@@ -120,12 +136,22 @@ $currency = $user['currency_code'] ? htmlspecialchars($user['currency_code']) : 
                 <li class="payment-item-empty">No payment methods added yet.</li>
             <?php else: ?>
                 <?php foreach ($payment_methods as $method): ?>
+
                     <li class="payment-item">
                         <span><?php echo htmlspecialchars($method['payment_method_name']); ?></span>
                         <a href="delete_payment_method.php?id=<?php echo $method['rover_payment_method_id']; ?>"
                            class="btn-delete"
-                           onclick="return confirm('Are you sure?');">Delete</a>
+                           onclick="return confirm('Are you sure?');">
+                            Delete
+                        </a>
                     </li>
+
+                    <?php if ($failed_delete_id === $method['rover_payment_method_id']): ?>
+                        <li class="error-message-li">
+                            Cannot delete: This method is in use by one or more expenses.
+                        </li>
+                    <?php endif; ?>
+
                 <?php endforeach; ?>
             <?php endif; ?>
         </ul>

@@ -98,9 +98,11 @@ $conn->close();
 
             <label for="payment_method_id">Payment Method</label>
             <select id="payment_method_id" name="payment_method_id">
+                <option value="" selected disabled hidden>Select a payment method</option>
                 <?php foreach ($payment_methods as $payment_method): ?>
                     <option value="<?php echo $payment_method['payment_method_id']; ?>"><?php echo $payment_method['payment_method_name']; ?></option>
                 <?php endforeach; ?>
+
             </select>
             <button type="submit" class="submit-btn" style="margin-top: 15px;">Add Method</button>
             <a href="profile.php" class="cancel-link">Cancel</a>

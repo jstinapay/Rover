@@ -14,6 +14,7 @@ if (!isset($_GET['trip_id'])) {
 $rover_id = $_SESSION['rover_id'];
 $trip_id = $_GET['trip_id'];
 $error_message = "";
+$trip_is_completed = false;
 
 require_once 'connect.php';
 
@@ -26,58 +27,74 @@ $stmt_status->close();
 
 if (!$result_status) {
     $error_message = "Trip not found or you do not have permission.";
+    $trip_is_completed = true;
 } elseif ($result_status['status'] === 'completed') {
     $error_message = "This trip has been completed. No further expenses can be added.";
+    $trip_is_completed = true;
 }
 
 $currency_code = isset($_SESSION['currency_code']) ? $_SESSION['currency_code'] : 'USD';
-$currency_symbols = ['PHP' => '₱', 'USD' => '$', 'EUR' => '€', 'JPY' => '¥', 'GBP' => '£', 'CNY' => '¥'];
+$currency_symbols = ['PHP' => '₱', 'USD' => '$', 'EUR' => '€', 'JPY' => '¥', 'GBP' => '£', 'CNY' => 'CN¥'];
 $symbol = isset($currency_symbols[$currency_code]) ? $currency_symbols[$currency_code] : '$';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error_message)) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$trip_is_completed) {
     $expense_name = $_POST['expense_name'];
     $category_budget_id = $_POST['category_budget_id'];
     $expense_date = $_POST['expense_date'];
-    $expense_amount = (float)$_POST['expense_amount'];
+    $expense_amount = (float) $_POST['expense_amount'];
     $payment_method_id = $_POST['payment_method_id'];
 
-    $sql_budget = "SELECT allocated_budget, 
-                          COALESCE(SUM(e.expense_amount), 0) AS total_spent
-                   FROM category_budget cb
-                   LEFT JOIN expense e ON cb.category_budget_id = e.category_budget_id
-                   WHERE cb.category_budget_id = ?
-                   GROUP BY cb.category_budget_id";
+    $sql_check = "SELECT t.rover_id FROM category_budget cb
+                  JOIN trip t ON cb.trip_id = t.trip_id
+                  WHERE cb.category_budget_id = ? AND t.rover_id = ?";
+    $stmt_check = $conn->prepare($sql_check);
+    $stmt_check->bind_param("ii", $category_budget_id, $rover_id);
+    $stmt_check->execute();
+    $result_check = $stmt_check->get_result();
 
-    $stmt_budget = $conn->prepare($sql_budget);
-    $stmt_budget->bind_param("i", $category_budget_id);
-    $stmt_budget->execute();
-    $budget_data = $stmt_budget->get_result()->fetch_assoc();
-    $stmt_budget->close();
-
-    $allocation = (float) $budget_data['allocated_budget'];
-    $total_spent = (float) $budget_data['total_spent'];
-
-    if (($total_spent + $expense_amount) > $allocation) {
-        $remaining_budget = $allocation - $total_spent;
-        $error_message = "Expense exceeds budget. You only have " . $symbol . number_format($remaining_budget, 2) . " left in this category.";
+    if ($result_check->num_rows == 0) {
+        $error_message = "Security check failed. You do not own this category.";
     } else {
-        $sql_insert = "INSERT INTO expense (category_budget_id, payment_method_id, expense_name, expense_amount, expense_date)
-                       VALUES (?, ?, ?, ?, ?)";
+        $sql_budget = "SELECT 
+                         cb.allocated_budget,
+                         COALESCE(SUM(e.expense_amount), 0) AS total_spent
+                       FROM category_budget cb
+                       LEFT JOIN expense e ON cb.category_budget_id = e.category_budget_id
+                       WHERE cb.category_budget_id = ?
+                       GROUP BY cb.category_budget_id, cb.allocated_budget";
 
-        $stmt_insert = $conn->prepare($sql_insert);
-        $stmt_insert->bind_param("iisds", $category_budget_id, $payment_method_id, $expense_name, $expense_amount, $expense_date);
+        $stmt_budget = $conn->prepare($sql_budget);
+        $stmt_budget->bind_param("i", $category_budget_id);
+        $stmt_budget->execute();
+        $budget_data = $stmt_budget->get_result()->fetch_assoc();
+        $stmt_budget->close();
 
-        if ($stmt_insert->execute()) {
-            header("Location: view_trip.php?trip_id=" . $trip_id);
-            exit();
+        $allocation = (float) $budget_data['allocated_budget'];
+        $total_spent = (float) $budget_data['total_spent'];
+
+        if (($total_spent + $expense_amount) > $allocation) {
+            $remaining_budget = $allocation - $total_spent;
+            $error_message = "Expense exceeds budget. You only have " . $symbol . number_format($remaining_budget, 2) . " left in this category.";
         } else {
-            $error_message = "Error logging expense: " . $stmt_insert->error;
+            $sql_insert = "INSERT INTO expense (category_budget_id, rover_payment_method_id, expense_name, expense_amount, expense_date)
+                           VALUES (?, ?, ?, ?, ?)";
+
+            $stmt_insert = $conn->prepare($sql_insert);
+            $stmt_insert->bind_param("iisds",$category_budget_id, $payment_method_id, $expense_name, $expense_amount, $expense_date);
+
+            if ($stmt_insert->execute()) {
+                header("Location: view_trip.php?trip_id=" . $trip_id);
+                exit();
+            } else {
+                $error_message = "Error logging expense: " . $stmt_insert->error;
+            }
+            $stmt_insert->close();
         }
-        $stmt_insert->close();
     }
+    $stmt_check->close();
 }
 
-$sql_cat = "SELECT cb.category_budget_id, c.category_name
+$sql_cat = "SELECT cb.category_budget_id, c.category_name 
             FROM category_budget cb
             JOIN category c ON cb.category_id = c.category_id
             WHERE cb.trip_id = ?";
@@ -87,10 +104,15 @@ $stmt_cat->execute();
 $categories = $stmt_cat->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt_cat->close();
 
-$sql_pm = "SELECT payment_method_id, payment_method_name 
-           FROM payment_method 
-           ORDER BY payment_method_name";
-$payment_methods = $conn->query($sql_pm)->fetch_all(MYSQLI_ASSOC);
+$sql_pm = "SELECT rpm.rover_payment_method_id, pm.payment_method_name 
+           FROM rover_payment_method rpm
+           JOIN payment_method pm ON rpm.payment_method_id = pm.payment_method_id
+           WHERE rpm.rover_id = ?";
+$stmt_pm = $conn->prepare($sql_pm);
+$stmt_pm->bind_param("i", $rover_id);
+$stmt_pm->execute();
+$payment_methods = $stmt_pm->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt_pm->close();
 
 $conn->close();
 ?>
@@ -111,7 +133,7 @@ $conn->close();
 </head>
 <body>
 <nav id="sidebar">
-    
+
 </nav>
 <main>
     <section class="createTrip-section">
@@ -150,12 +172,12 @@ $conn->close();
             <select id="payment_method_id" name="payment_method_id" required>
                 <option value="">Select a payment method...</option>
                 <?php foreach ($payment_methods as $pm): ?>
-                    <option value="<?php echo $pm['payment_method_id']; ?>">
+                    <option value="<?php echo $pm['rover_payment_method_id']; ?>">
                         <?php echo htmlspecialchars($pm['payment_method_name']); ?>
                     </option>
                 <?php endforeach; ?>
                 <?php if (empty($payment_methods)): ?>
-                    <option value="" disabled>No payment methods found.</option>
+                    <option value="" disabled>No payment methods found. Add one in your Profile.</option>
                 <?php endif; ?>
             </select>
 

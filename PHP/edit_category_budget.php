@@ -188,7 +188,7 @@ $conn->close();
             <div class="error-message"><?php echo htmlspecialchars($error_message); ?></div>
         <?php endif; ?>
 
-        <form action="edit_category_budget.php?category_budget_id=<?php echo $category_budget_id; ?>&trip_id=<?php echo $trip['trip_id']; ?>" method="POST">
+        <form action="edit_category_budget.php?category_budget_id=<?php echo $category_budget_id; ?>&trip_id=<?php echo $budget['trip_id']; ?>" method="POST">
 
             <input type="hidden" name="trip_id" value="<?php echo $budget['trip_id']; ?>">
             <input type="hidden" name="old_allocated_budget" value="<?php echo $budget['allocated_budget']; ?>">

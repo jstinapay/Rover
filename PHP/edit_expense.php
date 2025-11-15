@@ -24,18 +24,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $expense_name = $_POST['expense_name'];
     $category_budget_id = $_POST['category_budget_id'];
     $expense_date = $_POST['expense_date'];
-    $new_expense_amount = (float)$_POST['expense_amount'];
-    $payment_method_id = $_POST['payment_method_id'];
 
+    // --- THIS IS THE FIX ---
+    // It now correctly reads 'expense_amount' from your form
+    $new_expense_amount = (float)$_POST['expense_amount'];
+
+    $payment_method_id = $_POST['payment_method_id'];
     $old_expense_amount = (float)$_POST['old_expense_amount'];
     $trip_id = $_POST['trip_id'];
 
-    $sql_budget = "SELECT allocated_budget, 
-                          COALESCE(SUM(e.expense_amount), 0) AS total_spent
+    $sql_budget = "SELECT 
+                     cb.allocated_budget,
+                     COALESCE(SUM(e.expense_amount), 0) AS total_spent
                    FROM category_budget cb
                    LEFT JOIN expense e ON cb.category_budget_id = e.category_budget_id
                    WHERE cb.category_budget_id = ?
-                   GROUP BY cb.category_budget_id";
+                   GROUP BY cb.category_budget_id, cb.allocated_budget";
 
     $stmt_budget = $conn->prepare($sql_budget);
     $stmt_budget->bind_param("i", $category_budget_id);
@@ -44,58 +48,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt_budget->close();
 
     $allocation = (float) $budget_data['allocated_budget'];
-    $total_spent = (float) $budget_data['total_spent'];
+    $total_spent_before_edit = (float) $budget_data['total_spent'];
 
-    $new_total_spent = ($total_spent - $old_expense_amount) + $new_expense_amount;
+    $new_total_spent = ($total_spent_before_edit - $old_expense_amount) + $new_expense_amount;
 
     if ($new_total_spent > $allocation) {
-        $remaining_budget = $allocation - ($total_spent - $old_expense_amount);
+        $remaining_budget = $allocation - ($total_spent_before_edit - $old_expense_amount);
         $error_message = "Expense exceeds budget. You only have " . $symbol . number_format($remaining_budget, 2) . " left in this category.";
     } else {
-        $sql_update = "UPDATE expense SET
-                           category_budget_id = ?,
-                           payment_method_id = ?,
-                           expense_name = ?,
-                           expense_amount = ?,
-                           expense_date = ?
-                       WHERE expense_id = ?";
+        $sql_update = "UPDATE expense 
+                       SET expense_name = ?, category_budget_id = ?, rover_payment_method_id = ?, 
+                           expense_amount = ?, expense_date = ?
+                       WHERE expense_id = ? AND category_budget_id IN 
+                           (SELECT category_budget_id FROM category_budget WHERE trip_id IN
+                               (SELECT trip_id FROM trip WHERE rover_id = ?))";
 
         $stmt_update = $conn->prepare($sql_update);
-        $stmt_update->bind_param("iisdsi", $category_budget_id, $payment_method_id, $expense_name, $new_expense_amount, $expense_date, $expense_id);
+        $stmt_update->bind_param("siidsii", $expense_name, $category_budget_id, $payment_method_id, $new_expense_amount, $expense_date, $expense_id, $rover_id);
 
         if ($stmt_update->execute()) {
             header("Location: view_trip.php?trip_id=" . $trip_id);
             exit();
         } else {
-            $error_message = "Error logging expense: " . $stmt_update->error;
+            $error_message = "Update failed: " . $stmt_update->error;
         }
         $stmt_update->close();
     }
 }
 
-$sql_exp = "SELECT 
-                e.expense_name, e.expense_amount, e.expense_date, 
-                e.payment_method_id, e.category_budget_id,
-                cb.trip_id
-            FROM expense e
-            JOIN category_budget cb ON e.category_budget_id = cb.category_budget_id
-            JOIN trip t ON cb.trip_id = t.trip_id
-            WHERE e.expense_id = ? AND t.rover_id = ?";
-$stmt_exp = $conn->prepare($sql_exp);
-$stmt_exp->bind_param("ii", $expense_id, $rover_id);
-$stmt_exp->execute();
-$expense = $stmt_exp->get_result()->fetch_assoc();
-$stmt_exp->close();
+$sql_expense = "SELECT 
+                    e.expense_name, e.expense_amount, e.expense_date, 
+                    e.category_budget_id, e.rover_payment_method_id, 
+                    cb.trip_id
+                FROM expense e
+                JOIN category_budget cb ON e.category_budget_id = cb.category_budget_id
+                JOIN trip t ON cb.trip_id = t.trip_id
+                WHERE e.expense_id = ? AND t.rover_id = ?";
+$stmt_expense = $conn->prepare($sql_expense);
+$stmt_expense->bind_param("ii", $expense_id, $rover_id);
+$stmt_expense->execute();
+$result_expense = $stmt_expense->get_result();
 
-if (!$expense) {
+if ($result_expense->num_rows == 0) {
     echo "Expense not found or you do not have permission.";
-    $conn->close();
     exit();
 }
-
+$expense = $result_expense->fetch_assoc();
 $trip_id = $expense['trip_id'];
+$stmt_expense->close();
 
-$sql_cat = "SELECT cb.category_budget_id, c.category_name
+$sql_cat = "SELECT cb.category_budget_id, c.category_name 
             FROM category_budget cb
             JOIN category c ON cb.category_id = c.category_id
             WHERE cb.trip_id = ?";
@@ -105,10 +107,16 @@ $stmt_cat->execute();
 $categories = $stmt_cat->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt_cat->close();
 
-$sql_pm = "SELECT payment_method_id, payment_method_name 
-           FROM payment_method 
-           ORDER BY payment_method_name";
-$payment_methods = $conn->query($sql_pm)->fetch_all(MYSQLI_ASSOC);
+$sql_pm = "SELECT rpm.rover_payment_method_id, pm.payment_method_name 
+           FROM rover_payment_method rpm
+           JOIN payment_method pm ON rpm.payment_method_id = pm.payment_method_id
+           WHERE rpm.rover_id = ?";
+$stmt_pm = $conn->prepare($sql_pm);
+$stmt_pm->bind_param("i", $rover_id);
+$stmt_pm->execute();
+$payment_methods = $stmt_pm->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt_pm->close();
+
 $conn->close();
 ?>
 
@@ -205,8 +213,8 @@ $conn->close();
             <select id="payment_method_id" name="payment_method_id" required>
                 <option value="">Select a payment method...</option>
                 <?php foreach ($payment_methods as $pm): ?>
-                    <option value="<?php echo $pm['payment_method_id']; ?>"
-                        <?php if ($pm['payment_method_id'] == $expense['payment_method_id']) echo 'selected'; ?>>
+                    <option value="<?php echo $pm['rover_payment_method_id']; ?>"
+                        <?php if ($pm['rover_payment_method_id'] == $expense['rover_payment_method_id']) echo 'selected'; ?>>
                         <?php echo htmlspecialchars($pm['payment_method_name']); ?>
                     </option>
                 <?php endforeach; ?>

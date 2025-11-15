@@ -377,3 +377,14 @@ h1 {
     gap: 10px;
 }
 
+.error-message-li {
+    list-style-type: none;
+    background-color: #5c2c2c;
+    color: #f7c6c6;
+    padding: 0.8em 1.5em;
+    border-radius: 6px;
+    margin-top: -5px;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+}
+
