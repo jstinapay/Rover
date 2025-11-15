@@ -9,6 +9,15 @@ $rover_id = $_SESSION['rover_id'];
 
 require_once 'connect.php';
 
+$sql_payment_methods = "SELECT rpm.rover_payment_method_id, pm.payment_method_name 
+                        FROM rover_payment_method rpm
+                        JOIN payment_method pm ON rpm.payment_method_id = pm.payment_method_id
+                        WHERE rover_id = ?";
+$stmt_payment_methods = $conn->prepare($sql_payment_methods);
+$stmt_payment_methods->bind_param("i", $rover_id);
+$stmt_payment_methods->execute();
+$payment_methods = $stmt_payment_methods->get_result()->fetch_all(MYSQLI_ASSOC);
+
 $sql_user = "SELECT first_name, last_name, email, phone_number, currency_code 
              FROM rover 
              WHERE rover_id = ?";
@@ -98,6 +107,28 @@ $currency = $user['currency_code'] ? htmlspecialchars($user['currency_code']) : 
             <a href="edit_profile.php" class="btn-edit">Edit Profile</a>
             <a href="logout.php" class="btn-logout">Logout</a>
         </div>
+    </div>
+
+    <div class="payment-methods-panel">
+        <div class="payment-header">
+            <h2>Payment Methods</h2>
+            <a href="add_payment_method.php" class="btn-add">+ Add New</a>
+        </div>
+
+        <ul class="payment-list">
+            <?php if (empty($payment_methods)): ?>
+                <li class="payment-item-empty">No payment methods added yet.</li>
+            <?php else: ?>
+                <?php foreach ($payment_methods as $method): ?>
+                    <li class="payment-item">
+                        <span><?php echo htmlspecialchars($method['payment_method_name']); ?></span>
+                        <a href="delete_payment_method.php?id=<?php echo $method['rover_payment_method_id']; ?>"
+                           class="btn-delete"
+                           onclick="return confirm('Are you sure?');">Delete</a>
+                    </li>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </ul>
     </div>
 
 </main>

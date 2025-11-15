@@ -23,6 +23,7 @@ $currency_code = isset($_SESSION['currency_code']) ? $_SESSION['currency_code'] 
 $currency_symbols = ['PHP' => '₱', 'USD' => '$', 'EUR' => '€', 'JPY' => '¥', 'GBP' => '£', 'CNY' => '¥'];
 $symbol = isset($currency_symbols[$currency_code]) ? $currency_symbols[$currency_code] : '$';
 
+
 $sql_trip = "SELECT 
                 t.trip_id, t.trip_name, t.trip_budget, t.status,
                 ci.city_name, co.country_name
@@ -78,7 +79,8 @@ $sql_expenses = "SELECT
                  FROM expense e
                  JOIN category_budget cb ON e.category_budget_id = cb.category_budget_id
                  JOIN category c ON cb.category_id = c.category_id
-                 JOIN payment_method pm ON e.payment_method_id = pm.payment_method_id
+                 JOIN rover_payment_method rpm ON e.rover_payment_method_id = rpm.rover_payment_method_id
+                 JOIN payment_method pm ON rpm.payment_method_id = pm.payment_method_id
                  WHERE cb.trip_id = ?
                  ORDER BY e.expense_date DESC, e.expense_id DESC";
 $stmt_expenses = $conn->prepare($sql_expenses);
