@@ -254,6 +254,7 @@ h1 {
   padding: 25px;
   margin-top: 30px;
   border: 1px solid var(--line-clr);
+  margin-bottom: 20px;
 }
 
 .payment-header {
@@ -386,5 +387,30 @@ h1 {
     margin-top: -5px;
     margin-bottom: 10px;
     font-size: 0.9em;
+}
+
+.top-categories-panel {
+    background: var(--hover-clr);
+    border-radius: 8px;
+    padding: 25px;
+    margin-top: 30px;
+    border: 1px solid var(--line-clr);
+}
+
+.top-categories-header {
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--line-clr);
+}
+
+.top-categories-header h2 {
+    font-size: 1.6rem;
+    color: var(--text-clr);
+    font-weight: 600;
+}
+
+#categoriesChart {
+    width: 100%;
+    max-height: 320px;
 }
 

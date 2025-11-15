@@ -31,11 +31,30 @@ $failed_delete_id = null;
 if (isset($_GET['error']) && $_GET['error'] === 'in_use' && isset($_GET['failed_id'])) {
     $failed_delete_id = (int)$_GET['failed_id'];
 }
-$conn->close();
-
 
 $phone = $user['phone_number'] ? htmlspecialchars($user['phone_number']) : 'N/A';
 $currency = $user['currency_code'] ? htmlspecialchars($user['currency_code']) : 'N/A';
+
+$sql_top_categories = "
+    SELECT c.category_name, SUM(cb.allocated_budget) AS total_budget
+    FROM category_budget cb
+    JOIN category c ON cb.category_id = c.category_id
+    JOIN trip t ON cb.trip_id = t.trip_id
+    WHERE t.rover_id = ?
+    GROUP BY c.category_name
+    ORDER BY total_budget DESC
+    LIMIT 5;
+";
+
+$stmt_top_categories = $conn->prepare($sql_top_categories);
+$stmt_top_categories->bind_param("i", $rover_id);
+$stmt_top_categories->execute();
+$top_categories = $stmt_top_categories->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$category_names = array_column($top_categories, 'category_name');
+$category_amounts = array_column($top_categories, 'total_budget');
+
+$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -122,9 +141,6 @@ $currency = $user['currency_code'] ? htmlspecialchars($user['currency_code']) : 
     ?>
 
 
-
-
-
     <div class="payment-methods-panel">
         <div class="payment-header">
             <h2>Payment Methods</h2>
@@ -157,7 +173,56 @@ $currency = $user['currency_code'] ? htmlspecialchars($user['currency_code']) : 
         </ul>
     </div>
 
+    <div class="top-categories-panel">
+        <div class="top-categories-header">
+            <h2>Highest Budget Categories [TOP 5]</h2>
+        </div>
+
+    <canvas id="categoriesChart"></canvas>
+    </div>
+
 </main>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+    const ctx = document.getElementById('categoriesChart');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: <?php echo json_encode($category_names); ?>,
+            datasets: [{
+                label: 'Amount Spent',
+                data: <?php echo json_encode($category_amounts); ?>,
+                borderWidth: 2,
+                backgroundColor: '#5e63ff'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#e6e6ef'
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#e6e6ef'
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#e6e6ef'
+                    }
+                }
+            }
+        }
+    });
+    </script>
 
 </body>
 </html>
