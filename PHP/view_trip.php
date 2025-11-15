@@ -72,22 +72,23 @@ $total_budget = $trip['trip_budget'];
 $remaining_overall = $total_budget - $total_spent_overall;
 $unallocated = $total_budget - $total_allocated;
 
-$sql_expenses = "SELECT
+$sql_expenses = "SELECT 
                     e.expense_id, e.expense_name, e.expense_amount, e.expense_date,
                     c.category_name,
-                    pm.payment_method_name 
+                    pm.payment_method_name
                  FROM expense e
                  JOIN category_budget cb ON e.category_budget_id = cb.category_budget_id
                  JOIN category c ON cb.category_id = c.category_id
                  JOIN rover_payment_method rpm ON e.rover_payment_method_id = rpm.rover_payment_method_id
                  JOIN payment_method pm ON rpm.payment_method_id = pm.payment_method_id
                  WHERE cb.trip_id = ?
-                 ORDER BY e.expense_date DESC, e.expense_id DESC";
+                 ORDER BY e.expense_date DESC";
 $stmt_expenses = $conn->prepare($sql_expenses);
 $stmt_expenses->bind_param("i", $trip_id);
 $stmt_expenses->execute();
 $expenses = $stmt_expenses->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt_expenses->close();
+
 
 $conn->close();
 
@@ -247,33 +248,34 @@ $conn->close();
             <div class="expenses-table-wrapper">
                 <table class="expenses-table">
                     <thead>
-                        <tr>
-                            <th>Category</th>
-                            <th>Expense Name</th>
-                            <th>Amount</th>
-                            <th>Date</th>
-                            <th>Actions</th>
-                        </tr>
+                    <tr>
+                        <th>Category</th>
+                        <th>Expense Name</th>
+                        <th>Method</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
                     </thead>
                     <tbody>
-                        <?php if (!empty($expenses)): ?>
-                            <?php foreach ($expenses as $expense): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($expense['category_name']); ?></td>
-                                    <td><?php echo htmlspecialchars($expense['expense_name']); ?></td>
-                                    <td><?php echo $symbol .  number_format($expense['expense_amount'], 2); ?></td>
-                                    <td><?php echo date('M d, Y', strtotime($expense['expense_date'])); ?></td>
-                                    <td>
-                                        <a href="edit_expense.php?id=<?php echo $expense['expense_id']; ?>" class="edit-expense">Edit</a>
-                                        <a href="delete_expense.php?expense_id=<?php echo $expense['expense_id']; ?>&trip_id=<?php echo $trip['trip_id']; ?>" class="delete-expense" onclick="return confirm('Are you sure you want to delete this expense?');">Delete</a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
+                    <?php if (!empty($expenses)): ?>
+                        <?php foreach ($expenses as $expense): ?>
                             <tr>
-                                <td colspan="5">No expenses logged yet.</td>
+                                <td><?php echo htmlspecialchars($expense['category_name']); ?></td>
+                                <td><?php echo htmlspecialchars($expense['expense_name']); ?></td>
+                                <td><?php echo htmlspecialchars($expense['payment_method_name']); ?></td>
+                                <td><?php echo $symbol .  number_format($expense['expense_amount'], 2); ?></td>
+                                <td><?php echo date('M d, Y', strtotime($expense['expense_date'])); ?></td>
+                                 <td>
+                                    <a href="edit_expense.php?id=<?php echo $expense['expense_id']; ?>" class="edit-expense">Edit</a>
+                                    <a href="delete_expense.php?expense_id=<?php echo $expense['expense_id']; ?>&trip_id=<?php echo $trip['trip_id']; ?>" class="delete-expense" onclick="return confirm('Are you sure you want to delete this expense?');">Delete</a>
+                                </td>
                             </tr>
-                        <?php endif; ?>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="6">No expenses logged yet.</td> </tr>
+                    <?php endif; ?>
                     </tbody>
                 </table>
             </div>

@@ -57,15 +57,15 @@ $trip = $stmt_trip->get_result()->fetch_assoc();
 $stmt_trip->close();
 
 $sql_expenses = "SELECT 
-                    e.expense_id,
-                    e.expense_name,
-                    e.expense_amount,
-                    e.expense_date,
-                    c.category_name
+                    e.expense_id, e.expense_name, e.expense_amount, e.expense_date,
+                    c.category_name,
+                    pm.payment_method_name
                  FROM expense e
                  JOIN category_budget cb ON e.category_budget_id = cb.category_budget_id
                  JOIN category c ON cb.category_id = c.category_id
-                 WHERE e.category_budget_id = ?
+                 JOIN rover_payment_method rpm ON e.rover_payment_method_id = rpm.rover_payment_method_id
+                 JOIN payment_method pm ON rpm.payment_method_id = pm.payment_method_id
+                 WHERE cb.category_budget_id = ?
                  ORDER BY e.expense_date DESC";
 $stmt_expenses = $conn->prepare($sql_expenses);
 $stmt_expenses->bind_param("i", $category_budget_id);
@@ -167,10 +167,10 @@ $conn->close();
             </span>
         </div>
     </div>
-    
+
     <div class="expenses-container">
         <div class="expenses-header">
-            <h2>Expenses</h2>
+            <h2><?php echo htmlspecialchars($category['category_name']); ?> Expenses</h2>
         </div>
 
         <div class="expenses-table-wrapper">
@@ -178,10 +178,11 @@ $conn->close();
                 <thead>
                 <tr>
                     <th>Category</th>
-                    <th>Name</th>
+                    <th>Expense</th>
+                    <th>Method</th>
                     <th>Amount</th>
                     <th>Date</th>
-                    <th>Actions</th>
+                     <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -190,9 +191,10 @@ $conn->close();
                         <tr>
                             <td><?php echo htmlspecialchars($expense['category_name']); ?></td>
                             <td><?php echo htmlspecialchars($expense['expense_name']); ?></td>
+                            <td><?php echo htmlspecialchars($expense['payment_method_name']); ?></td>
                             <td><?php echo $symbol .  number_format($expense['expense_amount'], 2); ?></td>
                             <td><?php echo date('M d, Y', strtotime($expense['expense_date'])); ?></td>
-                            <td>
+                             <td>
                                 <a href="edit_expense.php?id=<?php echo $expense['expense_id']; ?>" class="edit-expense">Edit</a>
                                 <a href="delete_expense.php?expense_id=<?php echo $expense['expense_id']; ?>&trip_id=<?php echo $trip_id; ?>" class="delete-expense" onclick="return confirm('Are you sure you want to delete this expense?');">Delete</a>
                             </td>
@@ -200,8 +202,7 @@ $conn->close();
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="5">No expenses logged yet.</td>
-                    </tr>
+                        <td colspan="6">No expenses logged yet.</td> </tr>
                 <?php endif; ?>
                 </tbody>
             </table>
