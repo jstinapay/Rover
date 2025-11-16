@@ -562,4 +562,9 @@ main p {
   transition: width 0.3s ease;
 }
 
+.no-data {
+  text-align: center;
+  color: var(--secondary-text-clr);
+}
+
 

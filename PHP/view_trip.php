@@ -172,7 +172,7 @@ $conn->close();
                     <path d="M560-80v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q8 9 12.5 20t4.5 22q0 11-4 22.5T903-300L683-80H560Zm300-263-37-37 37 37ZM620-140h38l121-122-18-19-19-18-122 121v38ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v120h-80v-80H520v-200H240v640h240v80H240Zm280-400Zm241 199-19-18 37 37-18-19Z" />
                 </svg>
             </a>
-            <a href="finish_trip.php?trip_id=<?php echo $trip_id ?>" class="finish-btn-icon" onclick="return confirm('Are you sure you want to finish this trip?');">
+            <a href="finish_trip.php?trip_id=<?php echo $trip_id ?>" class="finish-btn-icon" title="Finish Trip" onclick="return confirm('Are you sure you want to finish this trip?');">
                 <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
                     <path d="M500-560ZM200-120v-680h250q-5 20-8 40t-2 40H280v240h290l16 80h134v-46q20 0 40-3t40-9v138H520l-16-80H280v280h-80Zm491-516 139-138-42-42-97 95-39-39-42 43 81 81Zm29-290q83 0 141.5 58.5T920-726q0 83-58.5 141.5T720-526q-83 0-141.5-58.5T520-726q0-83 58.5-141.5T720-926Z" />
                 </svg>
@@ -305,7 +305,7 @@ $conn->close();
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <tr>
+                        <tr class="no-data">
                             <td colspan="6">No expenses logged yet.</td> </tr>
                     <?php endif; ?>
                     </tbody>

@@ -201,8 +201,9 @@ $conn->close();
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <tr>
-                        <td colspan="6">No expenses logged yet.</td> </tr>
+                    <tr class="no-data">
+                        <td colspan="6">No expenses logged yet.</td>
+                    </tr>
                 <?php endif; ?>
                 </tbody>
             </table>
