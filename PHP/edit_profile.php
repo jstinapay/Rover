@@ -59,6 +59,7 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Profile</title>
     <link rel="stylesheet" href="../CSS/createTrip.css">
+    <script type="text/javascript" src="../JS/app.js" defer></script>
 </head>
 <body>
 

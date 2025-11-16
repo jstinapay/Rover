@@ -150,19 +150,19 @@ $conn->close();
             <span>Spent</span>
             <span>Remaining</span>
         </div>
-        
+
         <div class="progress-bar-container">
-            <div class="progress-bar-spent <?php echo $is_over_budget ? 'danger' : ''; ?>" 
+            <div class="progress-bar-spent"
                  style="width: <?php echo $bar_percentage; ?>%;">
             </div>
         </div>
-        
+
         <div class="budget-footer">
             <span class="spent-total">
                 <?php echo $symbol . number_format($total_spent, 2); ?>
             </span>
-            
-            <span class="<?php echo $is_over_budget ? 'danger-text' : ''; ?>">
+
+
                 <?php echo $symbol . number_format($remaining, 2) . " left";?>
             </span>
         </div>

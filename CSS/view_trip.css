@@ -510,6 +510,7 @@ main p {
   justify-content: space-between;
   color: var(--accent-clr);
   padding: 0 20px;
+  margin-bottom: 5%;
   
 }
 
@@ -537,6 +538,8 @@ main p {
   font-size: 1.1rem;
   font-weight: 500;
   margin-top: 10px;
+  flex-wrap: nowrap;
+  gap: 100px;
 }
 
 .budget-footer .spent-total {
@@ -559,11 +562,4 @@ main p {
   transition: width 0.3s ease;
 }
 
-.progress-bar-spent.danger {
-  background: #a43a3a;
-}
 
-.danger-text {
-  color: #a43a3a !important;
-  font-weight: 600;
-}

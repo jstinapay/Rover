@@ -68,7 +68,9 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Payment Method</title>
     <link rel="stylesheet" href="../CSS/dashboard.css">
-    <link rel="stylesheet" href="../CSS/createTrip.css"> <style>
+    <link rel="stylesheet" href="../CSS/createTrip.css">
+    <script type="text/javascript" src="../JS/app.js" defer></script>
+    <style>
         .cancel-link {
             display: block;
             text-align: center;

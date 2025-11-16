@@ -398,9 +398,25 @@ h1 {
 }
 
 .top-categories-header {
-    padding-bottom: 15px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--line-clr);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.trip-filter-dropdown {
+    padding: 8px 12px;
+    background-color: #3a3f77;
+    color: #e6e6ef;
+    border: 1px solid #5e63ff;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.trip-filter-dropdown:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #5e63ff;
 }
 
 .top-categories-header h2 {

@@ -54,6 +54,35 @@ $top_categories = $stmt_top_categories->get_result()->fetch_all(MYSQLI_ASSOC);
 $category_names = array_column($top_categories, 'category_name');
 $category_amounts = array_column($top_categories, 'total_budget');
 
+$sql_trips = "SELECT trip_id, trip_name FROM trip WHERE rover_id = ? ORDER BY start_date DESC";
+$stmt_trips = $conn->prepare($sql_trips);
+$stmt_trips->bind_param("i", $rover_id);
+$stmt_trips->execute();
+$trips = $stmt_trips->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt_trips->close();
+
+$sql_budget_utilization = "
+    SELECT c.category_name, 
+           SUM(cb.allocated_budget) AS total_budget, 
+           COALESCE(SUM(e.expense_amount), 0) AS total_expense
+    FROM category_budget cb
+    JOIN category c ON cb.category_id = c.category_id
+    LEFT JOIN expense e ON cb.category_budget_id = e.category_budget_id
+    JOIN trip t ON cb.trip_id = t.trip_id
+    WHERE t.rover_id = ?
+    GROUP BY c.category_name
+    ORDER BY total_budget DESC, total_expense DESC;
+";
+
+$stmt_budget_utilization = $conn->prepare($sql_budget_utilization);
+$stmt_budget_utilization->bind_param("i", $rover_id);
+$stmt_budget_utilization->execute();
+$budget_utilization = $stmt_budget_utilization->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$budget_utilization_names = array_column($budget_utilization, 'category_name');
+$budget_utilization_amounts = array_column($budget_utilization, 'total_budget');
+$budget_utilization_expenses = array_column($budget_utilization, 'total_expense');
+
 $conn->close();
 ?>
 
@@ -64,6 +93,7 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Profile - Rover</title>
     <link rel="stylesheet" href="../CSS/profile.css">
+    <script type="text/javascript" src="../JS/app.js" defer></script>
 
 </head>
 <body>
@@ -181,6 +211,22 @@ $conn->close();
     <canvas id="categoriesChart"></canvas>
     </div>
 
+    <div class="top-categories-panel">
+        <div class="top-categories-header">
+            <h2>Budget Utilization Report</h2>
+
+            <select id="tripFilter" class="trip-filter-dropdown">
+                <option value="all">All Trips</option>
+                <?php foreach ($trips as $trip): ?>
+                    <option value="<?php echo $trip['trip_id']; ?>">
+                        <?php echo htmlspecialchars($trip['trip_name']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <canvas id="UtilizationChart"></canvas>
+    </div>
+
 </main>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -192,7 +238,7 @@ $conn->close();
         data: {
             labels: <?php echo json_encode($category_names); ?>,
             datasets: [{
-                label: 'Amount Spent',
+                label: 'Amount Allocated',
                 data: <?php echo json_encode($category_amounts); ?>,
                 borderWidth: 2,
                 backgroundColor: '#5e63ff'
@@ -223,6 +269,86 @@ $conn->close();
         }
     });
     </script>
+
+<script>
+    const ctx2 = document.getElementById('UtilizationChart');
+    let utilizationChart;
+
+    const initialLabels = <?php echo json_encode($budget_utilization_names); ?>;
+    const initialAllocated = <?php echo json_encode($budget_utilization_amounts); ?>;
+    const initialSpent = <?php echo json_encode($budget_utilization_expenses); ?>;
+
+    function createOrUpdateChart(labels, allocatedData, spentData) {
+        if (utilizationChart) {
+            utilizationChart.data.labels = labels;
+            utilizationChart.data.datasets[0].data = allocatedData;
+            utilizationChart.data.datasets[1].data = spentData;
+            utilizationChart.update();
+        } else {
+            utilizationChart = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Amount Allocated',
+                            data: allocatedData,
+                            borderWidth: 2,
+                            backgroundColor: '#5e63ff'
+                        },
+                        {
+                            label: 'Amount Spent',
+                            data: spentData,
+                            borderWidth: 2,
+                            backgroundColor: '#b0b3c1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#e6e6ef' }
+                        },
+                        x: {
+                            ticks: { color: '#e6e6ef' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e6e6ef' }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    async function fetchChartData(tripId) {
+        let url = 'get_utilization_data.php?trip_id=' + tripId;
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const data = await response.json();
+
+            createOrUpdateChart(data.labels, data.allocated, data.spent);
+
+        } catch (error) {
+            console.error('Error fetching chart data:', error);
+        }
+    }
+
+    createOrUpdateChart(initialLabels, initialAllocated, initialSpent);
+
+    document.getElementById('tripFilter').addEventListener('change', function() {
+        const selectedTripId = this.value;
+        fetchChartData(selectedTripId);
+    });
+</script>
 
 </body>
 </html>

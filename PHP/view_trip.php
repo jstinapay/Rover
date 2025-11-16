@@ -89,6 +89,15 @@ $stmt_expenses->execute();
 $expenses = $stmt_expenses->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt_expenses->close();
 
+$total_spent = $total_spent_overall;
+$remaining = $total_budget - $total_spent;
+
+
+$bar_percentage = 0;
+if ($total_budget > 0) {
+    $bar_percentage = ($total_spent / $total_budget) * 100;
+}
+
 
 $conn->close();
 
@@ -237,9 +246,32 @@ $conn->close();
             </a>
         </div>
 
+
+
         <div class="expenses-container">
             <div class="expenses-header">
                 <h2>Expenses</h2>
+                <div class="budget-tracker">
+                    <div class="budget-header">
+                        <span>Spent</span>
+                        <span>Remaining</span>
+                    </div>
+
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-spent"
+                             style="width: <?php echo $bar_percentage; ?>%;">
+                        </div>
+                    </div>
+
+                    <div class="budget-footer">
+            <span class="spent-total">
+                <?php echo $symbol . number_format($total_spent, 2); ?>
+            </span>
+                        <span class="remaining-total">
+                <?php echo $symbol . number_format($remaining, 2) . " left";?>
+            </span>
+                    </div>
+                </div>
                 <div class="add-expense-button">
                     <a href="add_expense.php?trip_id=<?php echo $trip_id; ?>">+ Add Expense</a>
                 </div>
