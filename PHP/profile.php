@@ -83,6 +83,71 @@ $budget_utilization_names = array_column($budget_utilization, 'category_name');
 $budget_utilization_amounts = array_column($budget_utilization, 'total_budget');
 $budget_utilization_expenses = array_column($budget_utilization, 'total_expense');
 
+$sql_top_payment_methods = "
+    SELECT pm.payment_method_name,
+           COUNT(e.expense_id) AS usage_count
+    FROM expense e
+    JOIN rover_payment_method rpm 
+        ON e.rover_payment_method_id = rpm.rover_payment_method_id
+    JOIN payment_method pm 
+        ON rpm.payment_method_id = pm.payment_method_id
+    JOIN category_budget cb
+        ON e.category_budget_id = cb.category_budget_id
+    JOIN trip t
+        ON cb.trip_id = t.trip_id
+    WHERE t.rover_id = ?
+    GROUP BY pm.payment_method_name
+    ORDER BY usage_count DESC
+    LIMIT 5;
+";
+
+$stmt_top_payment_methods = $conn->prepare($sql_top_payment_methods);
+$stmt_top_payment_methods->bind_param("i", $rover_id);
+$stmt_top_payment_methods->execute();
+$top_payment_methods = $stmt_top_payment_methods->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$payment_method_names = array_column($top_payment_methods, 'payment_method_name');
+$payment_method_usage = array_column($top_payment_methods, 'usage_count');
+
+// DAILY expenses
+$sql_daily_expenses = "
+    SELECT DATE(e.expense_date) AS date, SUM(e.expense_amount) AS total
+    FROM expense e
+    JOIN category_budget cb ON e.category_budget_id = cb.category_budget_id
+    JOIN trip t ON cb.trip_id = t.trip_id
+    WHERE t.rover_id = ?
+    GROUP BY DATE(e.expense_date)
+    ORDER BY DATE(e.expense_date);
+";
+
+$stmt_daily = $conn->prepare($sql_daily_expenses);
+$stmt_daily->bind_param("i", $rover_id);
+$stmt_daily->execute();
+$daily_expenses = $stmt_daily->get_result()->fetch_all(MYSQLI_ASSOC);
+
+// MONTHLY expenses
+$sql_monthly_expenses = "
+    SELECT DATE_FORMAT(e.expense_date, '%Y-%m') AS month, SUM(e.expense_amount) AS total
+    FROM expense e
+    JOIN category_budget cb ON e.category_budget_id = cb.category_budget_id
+    JOIN trip t ON cb.trip_id = t.trip_id
+    WHERE t.rover_id = ?
+    GROUP BY DATE_FORMAT(e.expense_date, '%Y-%m')
+    ORDER BY month;
+";
+
+$stmt_monthly = $conn->prepare($sql_monthly_expenses);
+$stmt_monthly->bind_param("i", $rover_id);
+$stmt_monthly->execute();
+$monthly_expenses = $stmt_monthly->get_result()->fetch_all(MYSQLI_ASSOC);
+
+// Arrays for JS
+$daily_labels = array_column($daily_expenses, 'date');
+$daily_values = array_column($daily_expenses, 'total');
+
+$monthly_labels = array_column($monthly_expenses, 'month');
+$monthly_values = array_column($monthly_expenses, 'total');
+
 $conn->close();
 ?>
 
@@ -227,6 +292,34 @@ $conn->close();
         <canvas id="UtilizationChart"></canvas>
     </div>
 
+    <div class="top-categories-panel">
+        <div class="top-categories-header">
+            <h2>Top Payment Methods Used</h2>
+        </div>
+        <div class="payment-method-chart-container">           
+            <canvas id="paymentMethodsChart"></canvas>
+        </div>
+    </div>
+
+    <div class="top-categories-panel">
+        <div class="expense-linegraph-panel">
+
+            <div class="top-categories-header">
+                <h2>Overall Expenses Over Time</h2>
+            </div>
+
+            <select id="expenseViewMode" class="dropdown-mode">
+                <option value="daily">Daily</option>
+                <option value="monthly">Monthly</option>
+            </select>
+
+            <div class="expense-line-chart-container">
+                <canvas id="expensesLineChart"></canvas>
+            </div>
+
+        </div>
+    </div>
+
 </main>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -347,6 +440,93 @@ $conn->close();
     document.getElementById('tripFilter').addEventListener('change', function() {
         const selectedTripId = this.value;
         fetchChartData(selectedTripId);
+    });
+</script>
+
+<script>
+    const ctx3 = document.getElementById('paymentMethodsChart');
+
+    new Chart(ctx3, {
+        type: 'pie',
+        data: {
+            labels: <?php echo json_encode($payment_method_names); ?>,
+            datasets: [{
+                label: 'Usage Count',
+                data: <?php echo json_encode($payment_method_usage); ?>,
+                borderWidth: 1,
+                backgroundColor: [
+                    '#5e63ff',
+                    '#b0b3c1',
+                    '#4cc9f0',
+                    '#f72585',
+                    '#7209b7'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: { color: '#e6e6ef' }
+                }
+            }
+        }
+    });
+</script>
+
+<script>
+    const dailyLabels = <?php echo json_encode($daily_labels); ?>;
+    const dailyValues = <?php echo json_encode($daily_values); ?>;
+
+    const monthlyLabels = <?php echo json_encode($monthly_labels); ?>;
+    const monthlyValues = <?php echo json_encode($monthly_values); ?>;
+
+    const ctxLine = document.getElementById('expensesLineChart').getContext('2d');
+
+    let expenseChart = new Chart(ctxLine, {
+        type: 'line',
+        data: {
+            labels: dailyLabels,
+            datasets: [{
+                label: 'Expenses (₱)',
+                data: dailyValues,
+                borderWidth: 2,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    ticks: { color: '#e6e6ef' },
+                    beginAtZero: true
+                },
+                x: {
+                    ticks: { color: '#e6e6ef' }
+                }
+            },
+            plugins: {
+                legend: {
+                    labels: { color: '#e6e6ef' }
+                }
+            }
+        }
+    });
+
+    document.getElementById('expenseViewMode').addEventListener('change', function () {
+        const mode = this.value;
+
+        if (mode === 'daily') {
+            expenseChart.data.labels = dailyLabels;
+            expenseChart.data.datasets[0].data = dailyValues;
+        } else {
+            expenseChart.data.labels = monthlyLabels;
+            expenseChart.data.datasets[0].data = monthlyValues;
+        }
+
+        expenseChart.update();
     });
 </script>
 
