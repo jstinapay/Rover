@@ -37,11 +37,19 @@ $currency_code = isset($_SESSION['currency_code']) ? $_SESSION['currency_code'] 
 $currency_symbols = ['PHP' => '₱', 'USD' => '$', 'EUR' => '€', 'JPY' => '¥', 'GBP' => '£', 'CNY' => 'CN¥'];
 $symbol = isset($currency_symbols[$currency_code]) ? $currency_symbols[$currency_code] : '$';
 
+// Fetch trip dates for date validation
+$sql_trip_dates = "SELECT start_date, end_date FROM trip WHERE trip_id = ? AND rover_id = ?";
+$stmt_dates = $conn->prepare($sql_trip_dates);
+$stmt_dates->bind_param("ii", $trip_id, $rover_id);
+$stmt_dates->execute();
+$trip_dates = $stmt_dates->get_result()->fetch_assoc();
+$stmt_dates->close();
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$trip_is_completed) {
     $expense_name = $_POST['expense_name'];
     $category_budget_id = $_POST['category_budget_id'];
     $expense_date = $_POST['expense_date'];
-    $expense_amount = (float) $_POST['expense_amount'];
+    $expense_amount = (float)$_POST['expense_amount'];
     $payment_method_id = $_POST['payment_method_id'];
 
     $sql_check = "SELECT t.rover_id FROM category_budget cb
@@ -69,8 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$trip_is_completed) {
         $budget_data = $stmt_budget->get_result()->fetch_assoc();
         $stmt_budget->close();
 
-        $allocation = (float) $budget_data['allocated_budget'];
-        $total_spent = (float) $budget_data['total_spent'];
+        $allocation = (float)$budget_data['allocated_budget'];
+        $total_spent = (float)$budget_data['total_spent'];
 
         if (($total_spent + $expense_amount) > $allocation) {
             $remaining_budget = $allocation - $total_spent;
@@ -80,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$trip_is_completed) {
                            VALUES (?, ?, ?, ?, ?)";
 
             $stmt_insert = $conn->prepare($sql_insert);
-            $stmt_insert->bind_param("iisds",$category_budget_id, $payment_method_id, $expense_name, $expense_amount, $expense_date);
+            $stmt_insert->bind_param("iisds", $category_budget_id, $payment_method_id, $expense_name, $expense_amount, $expense_date);
 
             if ($stmt_insert->execute()) {
                 header("Location: view_trip.php?trip_id=" . $trip_id);
@@ -146,46 +154,72 @@ $conn->close();
         <?php endif; ?>
 
         <?php if (empty($error_message) || $result_status['status'] !== 'completed'): ?>
-        <form action="add_expense.php?trip_id=<?php echo htmlspecialchars($trip_id); ?>" method="POST">
-            <label for="expense_name">Expense Name</label>
-            <input type="text" id="expense_name" name="expense_name" placeholder="e.g., Coffee, Train ticket" required>
+            <form action="add_expense.php?trip_id=<?php echo htmlspecialchars($trip_id); ?>" method="POST">
+                <label for="expense_name">Expense Name</label>
+                <input type="text" id="expense_name" name="expense_name" placeholder="e.g., Coffee, Train ticket"
+                       required>
 
-            <label for="category_budget_id">Category</label>
-            <select id="category_budget_id" name="category_budget_id" required>
-                <option value="">Select a category...</option>
-                <?php foreach ($categories as $cat): ?>
-                    <option value="<?php echo $cat['category_budget_id']; ?>">
-                        <?php echo htmlspecialchars($cat['category_name']); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
+                <label for="category_budget_id">Category</label>
+                <select id="category_budget_id" name="category_budget_id" required>
+                    <option value="">Select a category...</option>
+                    <?php foreach ($categories as $cat): ?>
+                        <option value="<?php echo $cat['category_budget_id']; ?>">
+                            <?php echo htmlspecialchars($cat['category_name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
 
-            <label for="expense_date">Date</label>
-            <input type="date" id="expense_date" name="expense_date" value="<?php echo date('Y-m-d'); ?>" required>
+                <label for="expense_date">Date</label>
+                <input type="date"
+                       id="expense_date"
+                       name="expense_date"
+                       min="<?php echo $trip_dates['start_date']; ?>"
+                       max="<?php echo $trip_dates['end_date']; ?>"
+                       required>
 
-            <label for="expense_amount">Amount</label>
-            <div class="input-wrapper">
-                <input type="number" min="0" step=".01" id="expense_amount" name="expense_amount" placeholder="0.00" required>
-            </div>
+                <label for="expense_amount">Amount</label>
+                <div class="input-wrapper">
+                    <input type="number" min="0" step=".01" id="expense_amount" name="expense_amount" placeholder="0.00"
+                           required>
+                </div>
 
-            <label for="payment_method_id">Payment Method</label>
-            <select id="payment_method_id" name="payment_method_id" required>
-                <option value="">Select a payment method...</option>
-                <?php foreach ($payment_methods as $pm): ?>
-                    <option value="<?php echo $pm['rover_payment_method_id']; ?>">
-                        <?php echo htmlspecialchars($pm['payment_method_name']); ?>
-                    </option>
-                <?php endforeach; ?>
-                <?php if (empty($payment_methods)): ?>
-                    <option value="" disabled>No payment methods found. Add one in your Profile.</option>
-                <?php endif; ?>
-            </select>
+                <label for="payment_method_id">Payment Method</label>
+                <select id="payment_method_id" name="payment_method_id" required>
+                    <option value="">Select a payment method...</option>
+                    <?php foreach ($payment_methods as $pm): ?>
+                        <option value="<?php echo $pm['rover_payment_method_id']; ?>">
+                            <?php echo htmlspecialchars($pm['payment_method_name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                    <?php if (empty($payment_methods)): ?>
+                        <option value="" disabled>No payment methods found. Add one in your Profile.</option>
+                    <?php endif; ?>
+                </select>
 
-            <button type="submit" class="submit-btn">Log Expense</button>
-            <a href="view_trip.php?trip_id=<?php echo htmlspecialchars($trip_id); ?>" class="cancel-link">Cancel</a>
-        </form>
+                <button type="submit" class="submit-btn">Log Expense</button>
+                <a href="view_trip.php?trip_id=<?php echo htmlspecialchars($trip_id); ?>" class="cancel-link">Cancel</a>
+            </form>
         <?php endif; ?>
     </section>
 </main>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const expenseDateInput = document.getElementById('expense_date');
+        const form = document.querySelector('form');
+
+        // Additional client-side validation
+        form.addEventListener('submit', function (e) {
+            const expenseDate = new Date(expenseDateInput.value);
+            const minDate = new Date('<?php echo $trip_dates['start_date']; ?>');
+            const maxDate = new Date('<?php echo $trip_dates['end_date']; ?>');
+
+            if (expenseDate < minDate || expenseDate > maxDate) {
+                e.preventDefault();
+                alert('Expense date must be between the trip start date (<?php echo $trip_dates['start_date']; ?>) and end date (<?php echo $trip_dates['end_date']; ?>).');
+                return false;
+            }
+        });
+    });
+</script>
 </body>
 </html>

@@ -117,6 +117,14 @@ $stmt_pm->execute();
 $payment_methods = $stmt_pm->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt_pm->close();
 
+
+$sql_trip_dates = "SELECT start_date, end_date FROM trip WHERE trip_id = ? AND rover_id = ?";
+$stmt_dates = $conn->prepare($sql_trip_dates);
+$stmt_dates->bind_param("ii", $trip_id, $rover_id);
+$stmt_dates->execute();
+$trip_dates = $stmt_dates->get_result()->fetch_assoc();
+$stmt_dates->close();
+
 $conn->close();
 ?>
 
@@ -200,8 +208,13 @@ $conn->close();
             </select>
 
             <label for="expense_date">Date</label>
-            <input type="date" id="expense_date" name="expense_date"
-                   value="<?php echo htmlspecialchars($expense['expense_date']); ?>" required>
+            <input type="date" 
+                   id="expense_date" 
+                   name="expense_date"
+                   value="<?php echo htmlspecialchars($expense['expense_date']); ?>" 
+                   min="<?php echo $trip_dates['start_date']; ?>"
+                   max="<?php echo $trip_dates['end_date']; ?>"
+                   required>
 
             <label for="expense_amount">Amount</label>
             <div class="input-wrapper">

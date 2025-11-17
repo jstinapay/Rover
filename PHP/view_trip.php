@@ -25,7 +25,7 @@ $symbol = isset($currency_symbols[$currency_code]) ? $currency_symbols[$currency
 
 
 $sql_trip = "SELECT 
-                t.trip_id, t.trip_name, t.trip_budget, t.status,
+                t.trip_id, t.trip_name, t.trip_budget, t.status, t.start_date, t.end_date,
                 ci.city_name, co.country_name
              FROM trip t
              JOIN city ci ON t.city_id = ci.city_id
@@ -182,6 +182,7 @@ $conn->close();
                 Total: <?php echo $symbol; ?><?php echo number_format($trip['trip_budget'], 2); ?>
             </h2>
         </section>
+        <p class="trip-duration"><?php echo htmlspecialchars($trip['start_date']) . ' to ' . htmlspecialchars($trip['end_date']) ?></p>
 
         <div class="chart_container">
             <div class="chart">

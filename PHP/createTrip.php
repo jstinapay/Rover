@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt_trip = $conn->prepare($sql_trip);
         $stmt_trip->bind_param("iisssds", $rover_id, $city_id, $trip_name, $start_date, $end_date, $trip_budget, $status);
         $stmt_trip->execute();
-
+        
         $new_trip_id = $conn->insert_id;
         $stmt_trip->close();
 
@@ -157,6 +157,7 @@ $conn->close();
             <label for="end_date">End Date</label>
             <input type="date" id="end_date" name="end_date" required>
 
+
             <label for="total_budget">Total budget</label>
             <div class="input-wrapper">
                 <input type="number" min="0" step=".01" id="total_budget" name="total_budget" placeholder="0.00" required>
@@ -172,6 +173,17 @@ $conn->close();
     const continentSelect = document.getElementById('continent_id');
     const countrySelect = document.getElementById('country_id');
     const citySelect = document.getElementById('city_id');
+    const startDateInput = document.getElementById('start_date');
+    const endDateInput = document.getElementById('end_date');
+
+
+    startDateInput.addEventListener('change', function() {
+        endDateInput.min = this.value;
+
+        if (endDateInput.value && endDateInput.value < this.value) {
+            endDateInput.value = '';
+        }
+    });
 
     continentSelect.addEventListener('change', function() {
         const continentId = this.value;
