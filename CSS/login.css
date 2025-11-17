@@ -158,7 +158,7 @@ main {
     max-width: 400px;
     color: var(--text-clr);
 
-    #password {
+    .password {
         margin-bottom: 0;
     }
 }
@@ -239,5 +239,16 @@ a:hover {
     margin-top: 0;
     font-size: 0.85rem;
     margin-bottom: 1em;
+}
+
+.new-password {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
+
+.success-message {
+    color: var(--accent-clr);
+    text-align: center;
 }
 
