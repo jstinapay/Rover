@@ -157,6 +157,10 @@ main {
     width: 100%;
     max-width: 400px;
     color: var(--text-clr);
+
+    #password {
+        margin-bottom: 0;
+    }
 }
 
 .login-section h1 {
@@ -228,5 +232,12 @@ a {
 
 a:hover {
     text-decoration: underline;
+}
+
+.forgot_password {
+    margin-left: auto;
+    margin-top: 0;
+    font-size: 0.85rem;
+    margin-bottom: 1em;
 }
 

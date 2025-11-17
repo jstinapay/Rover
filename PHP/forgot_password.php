@@ -1,3 +1,50 @@
+<?php 
+//forgot password form
+
+
+require_once 'connect.php';
+
+$email = $_POST['email'];
+$password = $_POST['password'];
+$phone_number = $_POST['phone_number'];
+$error_message = "";
+
+$sql_rover = 'SELECT rover_id
+              FROM rover
+              WHERE email = ? OR phone_number = ?';
+$stmt_rover = $conn->prepare($sql_rover);
+$stmt_rover->bind_param("ss", $email, $phone_number);
+$stmt_rover->execute();
+$result_rover = $stmt_rover->get_result()->fetch_assoc();
+$rover_id = $result_rover['rover_id'];
+$stmt_rover->close();
+
+$sql_cred = 'SELECT email, phone_number
+             FROM rover
+             WHERE rover_id = ?';
+$stmt_cred = $conn->prepare($sql_cred);
+$stmt_cred->bind_param("i", $rover_id);
+$stmt_cred->execute();
+$credentials = $stmt_cred->get_result()->fetch_assoc();
+$stmt_cred->close();
+
+if ($credentials["email"] == $email || $credentials["phone_number"] == $phone_number) {
+    // Proceed with password reset process
+    $sql_password = 'UPDATE rover
+                     SET password = ?
+                     WHERE rover_id = ?';
+    $stmt_password = $conn->prepare($sql_password);
+    $hashed_password = password_hash($password, PASSWORD_BCRYPT);
+    $stmt_password->bind_param("si", $hashed_password, $rover_id);
+    $stmt_password->execute();
+    $stmt_password->close();
+    header("Location: login.php");
+    exit();
+} else {
+    $error_message = "No account found with the provided email or phone number.";
+}
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,15 +94,14 @@
 </nav>
 <main>
     <section class="login-section">
-        <h1>Login Your Account</h1>
-        <p>Start your travel budgeting journey with Rover.</p>
+        <h1>Change Password</h1>
+        <p>verify first before changing password</p>
 
         <form action="PHP/login.php" id="login-form" method="POST">
             <label for="email">Email</label>
             <input type="email" id="email" name="email" placeholder="Enter your email" required>
             <label for="password">Password</label>
             <input type="password" id="password" name="password" placeholder="Enter your password" required>
-            <a href="PHP/forgot_password.php" class="forgot_password">Forgot Password?</a>
             <button type="submit" class="submit-btn">Login</button>
             <p>Dont have an account? <a href="register.html">Register</a></p
             
